@@ -5178,5 +5178,368 @@ necesito agregar interfaz gráfica"
 **Versión:** 1.0  
 **Autor:** Diego Mercedes Llauger (2026-0048)  
 **Carrera:** Ingeniería en Ciberseguridad | Universidad Dominicano Americana
+
+🔐 PROYECTO: ROMPE CLAVES (Password Cracker Educativo)
+Autor: Diego Mercedes Llauger (2026-0048)
+Carrera: Ingeniería en Ciberseguridad | Universidad Dominicano Americana
+Objetivo: Sistema de análisis y crackeo de contraseñas con arquitectura de agentes
+
+📚 CONTEXTO
+Referencia del proyecto base:
+Sistema de 5 agentes adaptables
+Lo que reutilizamos:
+
+Arquitectura de agentes (5 agentes especializados)
+Orquestador centralizado
+Caché inteligente (no repetir análisis)
+Feedback adaptativo (sistema aprende del usuario)
+Optimización de tokens
+
+
+🎯 ¿QUÉ HACE?
+Sistema completo para analizar, crackear y evaluar contraseñas con 5 agentes especializados:
+Agente 1: ANALIZADOR 🔍
+Entrada: "diego2024"
+Salida:
+  - Score: 25/100 (DÉBIL)
+  - Entropía: 26.3 bits (se crackea en 0.5 segundos)
+  - Problemas: [patrón predecible, demasiado corta, ...]
+  - Patrones: [termina en año, nombre común, ...]
+Agente 2: ATACANTE ⚔️
+Entrada: Contraseña + método
+Métodos:
+  - Diccionario: palabras comunes + números
+  - Fuerza bruta: todas las combinaciones
+  - Patrones: nombre + año, etc.
+  - Mutaciones: capitalizaciones, símbolos
+
+Salida:
+  - ¿Se crackea? SÍ
+  - Intentos necesarios: 2847
+  - Tiempo: 0.8 segundos
+  - Razón: encontrada en diccionario
+Agente 3: EDUCADOR 📚
+Entrada: Análisis + ataque
+Salida:
+  - Resumen legible
+  - Lecciones personalizadas
+  - Siguientes pasos
+  - Recursos (herramientas, mejores prácticas)
+Agente 4: GENERADOR 🔧
+Entrada: Preferencias del usuario
+Salida: 3 sugerencias
+  1. SIMPLE: Fácil de recordar
+  2. BALANCEADA: Balance seguridad/usabilidad
+  3. PARANOIA: Máxima seguridad
+Agente 5: APRENDIZ 🧠
+Entrada: Feedback del usuario ("Eso es muy complejo")
+Salida:
+  - Lecciones extraídas
+  - Preferencias actualizadas
+  - Próxima sugerencia será más simple (automáticamente)
+ORQUESTADOR 🎭
+Coordina todo:
+  Analizador → Atacante → Educador → Generador
+  
+Con:
+  - Caché (no repetir análisis)
+  - Tokens optimizados
+  - Feedback → aprendizaje
+
+📦 ESTRUCTURA
+rompe-claves/
+├── src/
+│   ├── analyzer.py              # Agente 1: Análisis
+│   ├── attacker.py              # Agente 2: Ataque
+│   ├── educator.py              # Agente 3: Educación
+│   ├── generator.py             # Agente 4: Generación
+│   ├── learner.py               # Agente 5: Aprendizaje
+│   ├── orchestrator.py          # Orquestador
+│   └── __init__.py
+│
+├── examples/
+│   ├── 01_simple_analysis.py          # Analizar contraseña
+│   ├── 02_full_pipeline.py            # Sistema completo
+│   ├── 03_with_feedback.py            # Con aprendizaje
+│   └── 04_integration_demo.py         # Demostración
+│
+├── storage/
+│   ├── user_memory/             # Preferencias del usuario (JSON)
+│   └── cache/                   # Resultados en caché (JSON)
+│
+├── tests/
+│   └── test_agents.py
+│
+├── README.md                    # Este archivo
+├── requirements.txt             # Dependencias
+└── LICENSE
+
+🚀 INSTALACIÓN
+Paso 1: Clonar el repo
+bashgit clone https://github.com/diegomercedesllauger-cloud/sistema-de-5-agentes-adaptables-.git
+cd sistema-de-5-agentes-adaptables-
+Paso 2: Crear carpeta del proyecto
+bashmkdir -p projects/rompe-claves
+cd projects/rompe-claves
+Paso 3: Copiar archivos
+Copia los 3 archivos Python en src/:
+
+rompe_claves_1_analyzer.py → src/analyzer.py
+rompe_claves_2_attacker.py → src/attacker.py
+rompe_claves_3_4_5_orquestador.py → src/orchestrator.py
+
+Paso 4: Crear estructura
+bashmkdir -p storage/user_memory storage/cache
+touch src/__init__.py
+Paso 5: Instalar dependencias
+bashpip install -r requirements.txt
+(No hay dependencias externas, todo es Python puro)
+
+📖 EJEMPLOS DE USO
+Ejemplo 1: Analizar una contraseña
+pythonfrom src.analyzer import PasswordAnalyzer
+
+analyzer = PasswordAnalyzer()
+resultado = analyzer.analyze("diego2024")
+
+print(f"Score: {resultado['score']}/100")
+print(f"Fortaleza: {resultado['fortaleza']}")
+print(f"Problemas: {resultado['problemas']}")
+print(f"Tiempo crack: {resultado['seguridad']['tiempo_crack_gpu']}")
+Salida:
+Score: 25/100
+Fortaleza: DÉBIL
+Problemas: ['Demasiado corta (menos de 8 caracteres)', 'Falta MAYÚSCULAS', 'Falta símbolos especiales', 'Termina en año']
+Tiempo crack: 0.5 segundos
+
+Ejemplo 2: Intentar crackear
+pythonfrom src.attacker import PasswordAttacker
+
+attacker = PasswordAttacker()
+resultado = attacker.attack("diego2024", method="diccionario")
+
+if resultado['se_crackea']:
+    print(f"✓ Se crackea en {resultado['tiempo_estimado_real']['legible']}")
+    print(f"Intentos: {resultado['intentos_necesarios']}")
+else:
+    print("✗ No se crackea con este método")
+
+Ejemplo 3: Pipeline completo
+pythonfrom src.orchestrator import PasswordCrackerOrchestrator
+
+orchestrator = PasswordCrackerOrchestrator()
+
+# Ejecutar pipeline completo
+resultado = orchestrator.execute_pipeline(
+    password="diego2024",
+    user_id="diego_2026_0048",
+    methods=["diccionario", "patrones"]
+)
+
+# Acceder a cada componente
+print("ANÁLISIS:")
+print(f"  Score: {resultado['analisis']['score']}")
+
+print("\nATAQUES:")
+for metodo, ataque in resultado['ataques'].items():
+    print(f"  {metodo}: {ataque['se_crackea']}")
+
+print("\nSUGERENCIAS:")
+for sugerencia in resultado['sugerencias']['sugerencias']:
+    print(f"  {sugerencia['tipo']}: {sugerencia['contraseña']}")
+
+Ejemplo 4: Con feedback adaptativo
+python# Primera ejecución
+resultado1 = orchestrator.execute_pipeline(
+    "juanperez1999",
+    user_id="juan"
+)
+print(f"Sugerencia: {resultado1['sugerencias']['sugerencias'][1]}")
+
+# Usuario da feedback
+feedback = orchestrator.process_feedback(
+    "juan",
+    "Eso es demasiado complejo, quiero algo más simple"
+)
+
+# Segunda ejecución (sistema ya aprendió)
+resultado2 = orchestrator.execute_pipeline(
+    "maria2024",
+    user_id="juan"
+)
+
+# Nota: Ahora las sugerencias serán MÁS SIMPLES automáticamente
+print(f"Nueva sugerencia: {resultado2['sugerencias']['sugerencias'][0]}")
+# Se adaptó sin que tengas que decirle
+
+🧪 EJECUTAR EJEMPLOS
+bash# Ejemplo 1: Análisis simple
+python examples/01_simple_analysis.py
+
+# Ejemplo 2: Pipeline completo
+python examples/02_full_pipeline.py
+
+# Ejemplo 3: Con feedback
+python examples/03_with_feedback.py
+
+# Ejemplo 4: Demostración integrada
+python examples/04_integration_demo.py
+
+🎓 CONCEPTOS EDUCATIVOS
+¿Qué es entropía en contraseñas?
+Entropía = bits de aleatoriedad
+Fórmula: E = log₂(charset^longitud)
+Ejemplo:
+"diego2024" (9 caracteres, letras minúsculas + números)
+charset = 26 + 10 = 36 caracteres
+E = log₂(36^9) = 46.9 bits
+
+Interpretación:
+- 40 bits = se crackea en horas (GPU)
+- 60 bits = se crackea en años (GPU)
+- 80 bits = prácticamente imposible (GPU)
+¿Por qué el diccionario funciona?
+Caso: "diego2024"
+Atacante prueba:
+
+Palabras comunes: diego, juan, maria, ...
+Palabra + números: diego1, diego2, diego2024 ✓
+Encontrada en 2847 intentos
+
+Velocidad: GPU moderna: ~100,000 intentos/segundo
+Tiempo: 2847 / 100,000 = 0.028 segundos
+¿Cómo defenderse?
+
+NO uses patrones: Evita nombre+año, palabra+número
+SÍ usa aleatoriedad: Completamente aleatorio
+SÍ aumenta longitud: 12+ caracteres (mejor 16+)
+SÍ diversifica: Mayúsculas + minúsculas + números + símbolos
+SÍ usa gestor: KeePass, Bitwarden, 1Password
+
+
+🔧 ARCHITECTURE: Cómo todo se conecta
+┌─────────────────────────────────────────────────────────┐
+│                    ORQUESTADOR                          │
+│  (Coordina flujo, caché, tokens, feedback)              │
+└─────────────────────────────────────────────────────────┘
+                          ↓
+    ┌─────────────────────┼─────────────────────┐
+    ↓                     ↓                     ↓
+[ANALIZADOR]        [ATACANTE]            [EDUCADOR]
+(Evalúa fortaleza)  (Intenta crackear)  (Enseña seguridad)
+    ↓                     ↓                     ↓
+Score + patrones    ¿Se crackea?         Lecciones personalizadas
+    
+    ┌─────────────────────┴─────────────────────┐
+    ↓                                           ↓
+[GENERADOR]                                [APRENDIZ]
+(Crea alternativas)                        (Adapta al usuario)
+
+Entrada: contraseña              Entrada: feedback usuario
+Salida: 3 sugerencias            Salida: preferencias actualizadas
+
+📊 OPTIMIZACIÓN DE TOKENS
+Referencia: Auditoría numérica del proyecto anterior
+Sin optimización:
+Pregunta 1: Analyzer → Attacker → Educator → Generator = 1,150 tokens
+Pregunta 2: Analyzer → Attacker → Educator → Generator = 1,150 tokens (REPETIDO)
+Pregunta 3: Idem = 1,150 tokens
+TOTAL: 3,450 tokens
+Con caché inteligente:
+Pregunta 1: 1,150 tokens (procesa)
+Pregunta 2: 0 tokens (desde caché)
+Pregunta 3: 0 tokens (desde caché)
+TOTAL: 1,150 tokens (67% ahorro)
+
+🚀 INTEGRACIÓN AL REPO PRINCIPAL
+Para agregar a tu repo:
+bash# 1. En la rama main
+git checkout main
+
+# 2. Crear rama feature
+git branch feature/rompe-claves
+git checkout feature/rompe-claves
+
+# 3. Copiar proyecto
+cp -r projects/rompe-claves .
+
+# 4. Commit
+git add projects/rompe-claves/
+git commit -m "feat: Add rompe-claves password analyzer project
+
+- Analyzer: Evaluate password strength
+- Attacker: Crack attempt with multiple methods
+- Educator: Explain results
+- Generator: Create stronger passwords
+- Learner: Adaptive feedback system
+- Orchestrator: Coordinate all agents
+
+Uses same architecture as main project:
+- 5 specialized agents
+- Intelligent caching
+- Feedback learning
+- Token optimization"
+
+# 5. Push
+git push origin feature/rompe-claves
+
+# 6. Create Pull Request en GitHub
+# 7. Merge cuando esté listo
+
+📚 REFERENCIAS Y RECURSOS
+Documentos del proyecto anterior:
+
+Documentación completa
+Auditoría numérica (tokens)
+Hoja de ruta 7 días
+
+Seguridad de contraseñas:
+
+NIST Guidelines
+haveibeenpwned.com - Verifica si tu contraseña está en breach
+Bitwarden - Gestor de contraseñas recomendado
+
+Agentes y automatización:
+
+Architectural Patterns for AI Agents
+Token Optimization Techniques
+
+
+🤝 CONTRIBUCIÓN
+Este es un proyecto educativo. Sugerencias:
+
+Agregar más métodos de ataque (rainbow tables, hybrid, etc.)
+Crear interfaz web (Flask/FastAPI)
+Agregar análisis de patrones más sofisticados
+Integración con haveibeenpwned API
+Sistema de notificaciones
+
+
+📝 LICENCIA
+Educativo - Uso libre para propósitos educativos únicamente.
+AVISO LEGAL: Este código es SOLO para educación. No lo uses para acceder a sistemas que no te pertenezcan. Eso es ilegal.
+
+👤 AUTOR
+Diego Mercedes Llauger (2026-0048)
+Ingeniería en Ciberseguridad
+Universidad Dominicano Americana
+Abril 2026
+
+✅ CHECKLIST: ¿Todo funciona?
+
+ Puedo analizar una contraseña
+ Puedo intentar crackearla
+ Puedo ver sugerencias mejoradas
+ El sistema recuerda mis preferencias
+ Los ejemplos funcionan sin errores
+ Puedo integrar esto en mi repo principal
+ Entiendo cómo se conectan los 5 agentes
+
+Si todos están ✓, ¡estás listo para el portfolio!
+
+¡Éxito con tu proyecto de Ciberseguridad!
+Diego Mercedes Llauger (2026-0048)
+
+
 ════════════════════════════════════════════════════════════════════════════
 """
