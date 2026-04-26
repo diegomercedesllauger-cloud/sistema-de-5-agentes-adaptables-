@@ -1,0 +1,477 @@
+// ============================================
+// LIMPIADOR DE CACHE Y OPTIMIZADOR DE ESPACIO
+// Autor: Diego Mercedes Llauger (2026-0048)
+// Versión: 1.0 - Pseudocódigo (Pseint)
+// ============================================
+
+// ESTRUCTURA DE DATOS GLOBAL
+estructura CONFIGURACION
+    sistemaOperativo: Cadena    // "Windows", "Linux", "macOS"
+    modoLimpieza: Cadena        // "automatico", "manual", "agresivo"
+    crear_papelera: Booleano    // true = guardar en carpeta, false = borrar
+    ruta_papelera: Cadena       // "/ruta/a/papelera_limpieza"
+    log_archivo: Cadena         // "/ruta/log_limpieza.txt"
+fin estructura
+
+estructura ITEM_LIMPIEZA
+    nombre: Cadena              // "Cache Chrome", "Temp files"
+    ruta_windows: Cadena
+    ruta_linux: Cadena
+    ruta_macos: Cadena
+    tamaño_mb: Real
+    es_seguro: Booleano         // true = seguro borrar, false = requiere confirmación
+    categoria: Cadena           // "cache", "temp", "logs", "papelera"
+    edad_dias: Entero           // si > 365 → puede ser "agresivo"
+fin estructura
+
+estructura LOG_LIMPIEZA
+    fecha: Cadena               // "2024-04-24 14:30:00"
+    item_limpiado: Cadena
+    tamaño_liberado_mb: Real
+    accion: Cadena              // "movido_papelera", "borrado", "simulado"
+    ruta_original: Cadena
+fin estructura
+
+// ============================================
+// FUNCIONES AUXILIARES
+// ============================================
+
+Función detectar_sistema_operativo(): Cadena
+    // Detecta automáticamente en qué SO se ejecuta
+    Si (sistema operativo contiene "Windows") Entonces
+        Retornar "Windows"
+    Sino Si (sistema operativo contiene "Linux") Entonces
+        Retornar "Linux"
+    Sino Si (sistema operativo contiene "Darwin") Entonces
+        Retornar "macOS"
+    Sino
+        Retornar "Desconocido"
+    Fin Si
+Fin Función
+
+Función crear_carpeta_papelera(ruta: Cadena): Booleano
+    // Crea la carpeta de recuperación si no existe
+    Si NO existe_carpeta(ruta) Entonces
+        crear_carpeta(ruta)
+        escribir_log("✅ Papelera de recuperación creada: " + ruta)
+        Retornar Verdadero
+    Sino
+        Retornar Verdadero
+    Fin Si
+Fin Función
+
+Función calcular_tamaño_directorio(ruta: Cadena): Real
+    // Calcula tamaño total en MB de un directorio
+    tamaño_total <- 0
+    Para cada archivo en ruta hacer
+        tamaño_total <- tamaño_total + tamaño(archivo)
+    Fin Para
+    Retornar tamaño_total / (1024 * 1024)  // Convertir a MB
+Fin Función
+
+Función obtener_fecha_modificacion(ruta: Cadena): Cadena
+    // Obtiene la fecha de última modificación
+    Retornar fecha_modificacion(ruta)
+Fin Función
+
+Función calcular_dias_antiguedad(fecha_mod: Cadena): Entero
+    // Calcula cuántos días han pasado desde la última modificación
+    fecha_actual <- obtener_fecha_actual()
+    dias <- (fecha_actual - fecha_mod) / 86400  // segundos en un día
+    Retornar dias
+Fin Función
+
+Función escribir_log(mensaje: Cadena)
+    // Escribe en el archivo de log
+    archivo <- abrir(config.log_archivo, "anexar")
+    fecha_hora <- obtener_fecha_actual_formateada()
+    archivo.escribir(fecha_hora + " | " + mensaje + salto_linea)
+    archivo.cerrar()
+Fin Función
+
+Función mover_a_papelera(ruta_origen: Cadena, nombre_item: Cadena): Booleano
+    // Mueve archivo/carpeta a la papelera de recuperación
+    Si config.crear_papelera Entonces
+        ruta_destino <- config.ruta_papelera + "/" + nombre_item + "_" + timestamp()
+        mover_archivo(ruta_origen, ruta_destino)
+        escribir_log("📦 Movido a papelera: " + nombre_item)
+        Retornar Verdadero
+    Sino
+        borrar_archivo(ruta_origen)
+        escribir_log("🗑️  Borrado permanentemente: " + nombre_item)
+        Retornar Verdadero
+    Fin Si
+Fin Función
+
+// ============================================
+// INICIALIZACIÓN Y CONFIGURACIÓN
+// ============================================
+
+Procedimiento inicializar_config()
+    config <- nueva CONFIGURACION()
+    config.sistemaOperativo <- detectar_sistema_operativo()
+    config.modoLimpieza <- "normal"  // por defecto
+    config.crear_papelera <- Verdadero
+    
+    // Crear ruta de papelera según SO
+    Si config.sistemaOperativo = "Windows" Entonces
+        config.ruta_papelera <- "C:\Users\[USUARIO]\AppData\Local\LimpiadorClaude\Papelera"
+        config.log_archivo <- "C:\Users\[USUARIO]\AppData\Local\LimpiadorClaude\log.txt"
+    Sino Si config.sistemaOperativo = "Linux" Entonces
+        config.ruta_papelera <- "~/.limpiador_claude/papelera"
+        config.log_archivo <- "~/.limpiador_claude/log.txt"
+    Sino Si config.sistemaOperativo = "macOS" Entonces
+        config.ruta_papelera <- "~/Library/Application Support/LimpiadorClaude/Papelera"
+        config.log_archivo <- "~/Library/Application Support/LimpiadorClaude/log.txt"
+    Fin Si
+    
+    crear_carpeta_papelera(config.ruta_papelera)
+    escribir_log("🚀 Limpiador iniciado en: " + config.sistemaOperativo)
+Fin Procedimiento
+
+// ============================================
+// DEFINIR ITEMS A LIMPIAR
+// ============================================
+
+Función obtener_items_limpieza(): Arreglo<ITEM_LIMPIEZA>
+    // Define qué se puede limpiar (TODAS las plataformas)
+    items <- nuevo Arreglo<ITEM_LIMPIEZA>()
+    
+    // ===== WINDOWS =====
+    Si config.sistemaOperativo = "Windows" Entonces
+        item1 <- nueva ITEM_LIMPIEZA()
+        item1.nombre <- "Archivos Temporales Windows"
+        item1.ruta_windows <- "%TEMP%"
+        item1.es_seguro <- Verdadero
+        item1.categoria <- "temp"
+        item1.tamaño_mb <- calcular_tamaño_directorio(item1.ruta_windows)
+        items.agregar(item1)
+        
+        item2 <- nueva ITEM_LIMPIEZA()
+        item2.nombre <- "Cache de Navegadores (Chrome, Edge)"
+        item2.ruta_windows <- "%APPDATA%\Local\Google\Chrome\User Data\Default\Cache"
+        item2.es_seguro <- Verdadero
+        item2.categoria <- "cache"
+        item2.tamaño_mb <- calcular_tamaño_directorio(item2.ruta_windows)
+        items.agregar(item2)
+        
+        item3 <- nueva ITEM_LIMPIEZA()
+        item3.nombre <- "Papelera de Reciclaje"
+        item3.ruta_windows <- "$Recycle.Bin"
+        item3.es_seguro <- Falso  // Requiere confirmación
+        item3.categoria <- "papelera"
+        item3.tamaño_mb <- calcular_tamaño_directorio(item3.ruta_windows)
+        items.agregar(item3)
+        
+        item4 <- nueva ITEM_LIMPIEZA()
+        item4.nombre <- "Prefetch Files (optimización de arranque)"
+        item4.ruta_windows <- "C:\Windows\Prefetch"
+        item4.es_seguro <- Verdadero
+        item4.categoria <- "cache"
+        item4.tamaño_mb <- calcular_tamaño_directorio(item4.ruta_windows)
+        items.agregar(item4)
+    Fin Si
+    
+    // ===== LINUX =====
+    Si config.sistemaOperativo = "Linux" Entonces
+        item1 <- nueva ITEM_LIMPIEZA()
+        item1.nombre <- "Directorio /tmp"
+        item1.ruta_linux <- "/tmp"
+        item1.es_seguro <- Verdadero
+        item1.categoria <- "temp"
+        item1.tamaño_mb <- calcular_tamaño_directorio(item1.ruta_linux)
+        items.agregar(item1)
+        
+        item2 <- nueva ITEM_LIMPIEZA()
+        item2.nombre <- "Cache de paquetes APT"
+        item2.ruta_linux <- "/var/cache/apt/archives"
+        item2.es_seguro <- Verdadero
+        item2.categoria <- "cache"
+        item2.tamaño_mb <- calcular_tamaño_directorio(item2.ruta_linux)
+        items.agregar(item2)
+        
+        item3 <- nueva ITEM_LIMPIEZA()
+        item3.nombre <- "Cache local del usuario"
+        item3.ruta_linux <- "~/.cache"
+        item3.es_seguro <- Verdadero
+        item3.categoria <- "cache"
+        item3.tamaño_mb <- calcular_tamaño_directorio(item3.ruta_linux)
+        items.agregar(item3)
+        
+        item4 <- nueva ITEM_LIMPIEZA()
+        item4.nombre <- "Logs antiguos (/var/log)"
+        item4.ruta_linux <- "/var/log"
+        item4.edad_dias <- calcular_dias_antiguedad(obtener_fecha_modificacion("/var/log"))
+        item4.es_seguro <- Falso  // Requiere confirmación
+        item4.categoria <- "logs"
+        item4.tamaño_mb <- calcular_tamaño_directorio(item4.ruta_linux)
+        items.agregar(item4)
+    Fin Si
+    
+    // ===== MACOS =====
+    Si config.sistemaOperativo = "macOS" Entonces
+        item1 <- nueva ITEM_LIMPIEZA()
+        item1.nombre <- "Directorio /var/tmp"
+        item1.ruta_macos <- "/var/tmp"
+        item1.es_seguro <- Verdadero
+        item1.categoria <- "temp"
+        item1.tamaño_mb <- calcular_tamaño_directorio(item1.ruta_macos)
+        items.agregar(item1)
+        
+        item2 <- nueva ITEM_LIMPIEZA()
+        item2.nombre <- "Application Cache"
+        item2.ruta_macos <- "~/Library/Caches"
+        item2.es_seguro <- Verdadero
+        item2.categoria <- "cache"
+        item2.tamaño_mb <- calcular_tamaño_directorio(item2.ruta_macos)
+        items.agregar(item2)
+        
+        item3 <- nueva ITEM_LIMPIEZA()
+        item3.nombre <- "Papelera (Trash)"
+        item3.ruta_macos <- "~/.Trash"
+        item3.es_seguro <- Falso  // Requiere confirmación
+        item3.categoria <- "papelera"
+        item3.tamaño_mb <- calcular_tamaño_directorio(item3.ruta_macos)
+        items.agregar(item3)
+        
+        item4 <- nueva ITEM_LIMPIEZA()
+        item4.nombre <- "Language Files no usados"
+        item4.ruta_macos <- "/Library/Localizations"
+        item4.es_seguro <- Falso  // Requiere confirmación
+        item4.categoria <- "cache"
+        item4.tamaño_mb <- calcular_tamaño_directorio(item4.ruta_macos)
+        items.agregar(item4)
+    Fin Si
+    
+    Retornar items
+Fin Función
+
+// ============================================
+// LIMPIEZA AUTOMÁTICA vs MANUAL
+// ============================================
+
+Procedimiento limpiar_automatico()
+    escribir_log("🤖 Iniciando limpieza AUTOMÁTICA...")
+    items <- obtener_items_limpieza()
+    espacio_total_liberado <- 0
+    
+    Para cada item en items hacer
+        Si item.es_seguro Entonces
+            Escribir "Limpiando: " + item.nombre + " (" + item.tamaño_mb + " MB)"
+            ruta <- obtener_ruta_para_so(item)
+            mover_a_papelera(ruta, item.nombre)
+            espacio_total_liberado <- espacio_total_liberado + item.tamaño_mb
+        Fin Si
+    Fin Para
+    
+    Escribir ""
+    Escribir "✅ Limpieza completada"
+    Escribir "📊 Espacio liberado: " + espacio_total_liberado + " MB"
+    escribir_log("Limpieza automática completada. Liberados: " + espacio_total_liberado + " MB")
+Fin Procedimiento
+
+Procedimiento limpiar_manual()
+    escribir_log("👤 Iniciando limpieza MANUAL...")
+    items <- obtener_items_limpieza()
+    espacio_total_liberado <- 0
+    
+    Escribir "=== SELECCIONA QUÉ LIMPIAR ==="
+    Escribir ""
+    
+    Para i <- 0 Hasta items.longitud()-1 hacer
+        item <- items[i]
+        Escribir (i+1) + ". " + item.nombre
+        Escribir "   Tamaño: " + item.tamaño_mb + " MB"
+        Si NO item.es_seguro Entonces
+            Escribir "   ⚠️  REQUIERE CONFIRMACIÓN"
+        Fin Si
+        Escribir ""
+    Fin Para
+    
+    Escribir "Ingresa los números de los items a limpiar (ej: 1,2,4)"
+    Leer selecciones
+    
+    selecciones_array <- dividir(selecciones, ",")
+    
+    Para cada seleccion en selecciones_array hacer
+        indice <- Entero(seleccion) - 1
+        item <- items[indice]
+        
+        Si NO item.es_seguro Entonces
+            Escribir "⚠️  Confirma limpieza de: " + item.nombre + " (S/N)"
+            Leer confirmacion
+            Si confirmacion NO = "S" Entonces
+                Escribir "❌ Cancelado"
+                Continuar
+            Fin Si
+        Fin Si
+        
+        Escribir "🧹 Limpiando: " + item.nombre
+        ruta <- obtener_ruta_para_so(item)
+        mover_a_papelera(ruta, item.nombre)
+        espacio_total_liberado <- espacio_total_liberado + item.tamaño_mb
+    Fin Para
+    
+    Escribir ""
+    Escribir "✅ Limpieza manual completada"
+    Escribir "📊 Espacio liberado: " + espacio_total_liberado + " MB"
+    escribir_log("Limpieza manual completada. Liberados: " + espacio_total_liberado + " MB")
+Fin Procedimiento
+
+Procedimiento limpiar_agresivo()
+    escribir_log("⚡ Iniciando limpieza AGRESIVA...")
+    items <- obtener_items_limpieza()
+    espacio_total_liberado <- 0
+    
+    Escribir "=== LIMPIEZA AGRESIVA ==="
+    Escribir "Se limpiarán archivos con más de 365 días sin usar"
+    Escribir ""
+    
+    Para cada item en items hacer
+        // En modo agresivo, limpiar logs y archivos viejos
+        Si (item.categoria = "logs" O item.categoria = "cache") Y item.edad_dias > 365 Entonces
+            Escribir "Limpiando (agresivo): " + item.nombre
+            ruta <- obtener_ruta_para_so(item)
+            mover_a_papelera(ruta, item.nombre)
+            espacio_total_liberado <- espacio_total_liberado + item.tamaño_mb
+        Fin Si
+    Fin Para
+    
+    Escribir ""
+    Escribir "✅ Limpieza agresiva completada"
+    Escribir "📊 Espacio liberado: " + espacio_total_liberado + " MB"
+    escribir_log("Limpieza agresiva completada. Liberados: " + espacio_total_liberado + " MB")
+Fin Procedimiento
+
+// ============================================
+// SIMULACIÓN (DRY RUN)
+// ============================================
+
+Procedimiento simular_limpieza(modo: Cadena)
+    escribir_log("🔍 Simulando limpieza en modo: " + modo)
+    items <- obtener_items_limpieza()
+    espacio_estimado <- 0
+    
+    Escribir "=== SIMULACIÓN DE LIMPIEZA (SIN BORRAR NADA) ==="
+    Escribir ""
+    
+    Para cada item en items hacer
+        Si modo = "automatico" Y item.es_seguro Entonces
+            Escribir "✓ Se SIMULARÍA limpiar: " + item.nombre + " (" + item.tamaño_mb + " MB)"
+            espacio_estimado <- espacio_estimado + item.tamaño_mb
+        Sino Si modo = "manual" Entonces
+            Escribir "✓ Disponible para limpiar: " + item.nombre + " (" + item.tamaño_mb + " MB)"
+            espacio_estimado <- espacio_estimado + item.tamaño_mb
+        Fin Si
+    Fin Para
+    
+    Escribir ""
+    Escribir "📊 ESPACIO QUE SE LIBERARÍA: " + espacio_estimado + " MB"
+    Escribir "⚠️  Esto es una SIMULACIÓN. No se borró nada."
+    escribir_log("Simulación completada. Espacio estimado: " + espacio_estimado + " MB")
+Fin Procedimiento
+
+// ============================================
+// VISUALIZAR LOG
+// ============================================
+
+Procedimiento ver_log()
+    Escribir "=== HISTORIAL DE LIMPIEZAS ==="
+    Escribir ""
+    
+    archivo <- abrir(config.log_archivo, "leer")
+    Mientras NO archivo.fin_archivo() hacer
+        linea <- archivo.leer_linea()
+        Escribir linea
+    Fin Mientras
+    archivo.cerrar()
+    
+    Escribir ""
+    Escribir "📁 Papelera de recuperación: " + config.ruta_papelera
+Fin Procedimiento
+
+// ============================================
+// MENU PRINCIPAL
+// ============================================
+
+Procedimiento mostrar_menu()
+    Escribir ""
+    Escribir "╔════════════════════════════════════════╗"
+    Escribir "║  LIMPIADOR DE CACHE - DIEGO MERCEDES  ║"
+    Escribir "║  (2026-0048) Ciberseguridad          ║"
+    Escribir "╚════════════════════════════════════════╝"
+    Escribir ""
+    Escribir "Sistema detectado: " + config.sistemaOperativo
+    Escribir ""
+    Escribir "1. Limpieza AUTOMÁTICA (items seguros)"
+    Escribir "2. Limpieza MANUAL (elegir qué limpiar)"
+    Escribir "3. Limpieza AGRESIVA (archivos viejos)"
+    Escribir "4. SIMULAR limpieza (solo ver, no borrar)"
+    Escribir "5. Ver HISTORIAL de limpiezas"
+    Escribir "6. SALIR"
+    Escribir ""
+    Escribir "Selecciona opción (1-6): "
+Fin Procedimiento
+
+Procedimiento programa_principal()
+    inicializar_config()
+    
+    opcion <- 0
+    Mientras opcion NO = 6 hacer
+        mostrar_menu()
+        Leer opcion
+        
+        Segun opcion hacer
+            Caso 1:
+                Escribir "Confirma limpieza AUTOMÁTICA (S/N): "
+                Leer confirm
+                Si confirm = "S" Entonces
+                    limpiar_automatico()
+                Fin Si
+            
+            Caso 2:
+                limpiar_manual()
+            
+            Caso 3:
+                Escribir "Confirma limpieza AGRESIVA (S/N): "
+                Leer confirm
+                Si confirm = "S" Entonces
+                    limpiar_agresivo()
+                Fin Si
+            
+            Caso 4:
+                Escribir "1. Simular automático"
+                Escribir "2. Simular manual"
+                Leer sim_opcion
+                Si sim_opcion = 1 Entonces
+                    simular_limpieza("automatico")
+                Sino Si sim_opcion = 2 Entonces
+                    simular_limpieza("manual")
+                Fin Si
+            
+            Caso 5:
+                ver_log()
+            
+            Caso 6:
+                Escribir "👋 ¡Hasta luego! (Papelera en: " + config.ruta_papelera + ")"
+                escribir_log("✅ Limpiador cerrado")
+            
+            De Otro Modo:
+                Escribir "❌ Opción no válida"
+        Fin Segun
+        
+        Si opcion NO = 6 Entonces
+            Escribir ""
+            Escribir "Presiona ENTER para continuar..."
+            Leer pausa
+        Fin Si
+    Fin Mientras
+Fin Procedimiento
+
+// ============================================
+// PUNTO DE ENTRADA
+// ============================================
+
+Inicio
+    programa_principal()
+Fin
