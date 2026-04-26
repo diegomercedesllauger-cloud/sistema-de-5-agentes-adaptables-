@@ -1,0 +1,1926 @@
+🧠 AGENTE 1: ANALIZADOR (Analyzer)
+Función: Evaluar fortaleza de contraseña
+pythonclass PasswordAnalyzer:
+    """
+    Analiza una contraseña y devuelve:
+    - Puntuación de entropía (bits)
+    - Patrones detectados
+    - Tiempo estimado para crackear
+    """
+    
+    def analyze(self, password: str) -> Dict:
+        return {
+            "contraseña": password,
+            "longitud": len(password),
+            "entropía_bits": self._calculate_entropy(password),
+            "patrones": self._detect_patterns(password),
+            "fortaleza": "DÉBIL" | "MEDIA" | "FUERTE",
+            "tiempo_crack_gpu": "2 minutos" | "2 horas" | "500 años",
+            "score": 0-100,
+            "problemas": ["Solo números", "Secuencia común", ...]
+        }
+Ejemplo:
+Input:  "diego2024"
+Output: {
+    "score": 25,
+    "fortaleza": "DÉBIL",
+    "patrones": ["nombre_común", "año_actual"],
+    "entropía": 26.3 bits,
+    "tiempo_crack_gpu": "0.5 segundos",
+    "problemas": [
+        "Solo letras minúsculas + números",
+        "Patrón: nombre + año",
+        "Muy corta (9 caracteres)"
+    ]
+}
+
+⚔️ AGENTE 2: ATACANTE (Attacker)
+Función: Intentar crackear usando diferentes métodos
+pythonclass PasswordAttacker:
+    """
+    Intenta crackear una contraseña usando:
+    1. Diccionario (palabras comunes)
+    2. Fuerza bruta (todas las combinaciones)
+    3. Patrones (nombre + número)
+    4. Mutaciones (variantes comunes)
+    """
+    
+    def attack(self, password: str, method: str) -> Dict:
+        return {
+            "método": "diccionario" | "fuerza_bruta" | "patrones" | "mutaciones",
+            "se_crackea": True | False,
+            "intento_exitoso": "diego2024" | None,
+            "intentos_necesarios": 127,
+            "tiempo_segundos": 0.023,
+            "confianza": 95,
+            "variantes_probadas": [
+                "diego2024",
+                "diego2025",
+                "diego123",
+                ...
+            ]
+        }
+Ejemplo:
+Input:  "diego2024", method="diccionario"
+Output: {
+    "se_crackea": True,
+    "intento_exitoso": "diego2024",
+    "intentos_necesarios": 2847,
+    "tiempo_segundos": 0.8,
+    "confianza": 100,
+    "razon": "Encontrada en diccionario de nombres + años"
+}
+
+📚 AGENTE 3: EDUCADOR (Educator)
+Función: Explicar POR QUÉ la contraseña es débil y cómo mejorar
+pythonclass PasswordEducator:
+    """
+    Transforma análisis técnico en lecciones
+    personalizadas según el usuario
+    """
+    
+    def educate(self, analysis: Dict, user_prefs: Dict) -> Dict:
+        return {
+            "resumen": "Tu contraseña es débil",
+            "lecciones": [
+                {
+                    "problema": "Patrón predecible",
+                    "explicacion": "Nombres comunes + años son fáciles de adivinar",
+                    "impacto": "Puede crackerse en segundos"
+                },
+                {
+                    "problema": "Corta",
+                    "explicacion": "Menos caracteres = menos combinaciones posibles",
+                    "impacto": "Exponencialmente más fácil de crackear"
+                },
+                {
+                    "problema": "Solo minúsculas + números",
+                    "explicacion": "Sin símbolos especiales = menos variedad",
+                    "impacto": "Reduce posibles combinaciones enormemente"
+                }
+            ],
+            "siguientes_pasos": [
+                "1. Aumenta a 12+ caracteres",
+                "2. Agrega MAYÚSCULAS",
+                "3. Agrega símbolos (!@#$%)"
+            ],
+            "nivel_detalle": "simple" | "intermedio" | "avanzado"  # Adaptativo
+        }
+
+🔧 AGENTE 4: GENERADOR (Generator)
+Función: Crear contraseñas alternativas mejoradas
+pythonclass PasswordGenerator:
+    """
+    Genera contraseñas mejoradas basadas en
+    preferencias del usuario
+    """
+    
+    def generate(self, base: str, user_prefs: Dict) -> Dict:
+        return {
+            "sugerencias": [
+                {
+                    "contraseña": "diego#2024*Seg",
+                    "tipo": "simple",
+                    "fortaleza": "FUERTE",
+                    "score": 78,
+                    "razon": "Añade símbolo + mayúscula"
+                },
+                {
+                    "contraseña": "D1eg0!2024@Seg#",
+                    "tipo": "balanceado",
+                    "fortaleza": "MUY FUERTE",
+                    "score": 92,
+                    "razon": "15 caracteres, símbolos, mayúsculas, números"
+                },
+                {
+                    "contraseña": "Dr^nT#9$kL2024!mQ%vP@8",
+                    "tipo": "paranoia",
+                    "fortaleza": "PARANOIA",
+                    "score": 99,
+                    "razon": "Completamente aleatoria, 24 caracteres"
+                }
+            ]
+        }
+
+🧠 AGENTE 5: APRENDIZ (Learner)
+Función: Aprender del feedback del usuario
+pythonclass PasswordLearner:
+    """
+    Procesa feedback y adapta próximos análisis
+    
+    Ejemplo:
+    Usuario dice: "Eso fue muy paranoia, algo más simple"
+    → Sistema aprende: próximas sugerencias serán "simple"
+    """
+    
+    def learn(self, feedback: str, user_id: str) -> Dict:
+        return {
+            "feedback_procesado": feedback,
+            "lecciones": [
+                "usuario_prefiere_simple",
+                "no_quiere_paranoia"
+            ],
+            "nuevas_preferencias": {
+                "complejidad": "simple",
+                "longitud_mínima": 12,
+                "símbolos_requeridos": True,
+                "nivel_detalle_educación": "básico"
+            },
+            "próxima_ejecución": "Usará estas preferencias automáticamente"
+        }
+
+🎭 ORQUESTADOR (Orchestrator)
+Coordina todo (caché, tokens, secuencia):
+pythonclass PasswordCrackerOrchestrator:
+    """
+    Ejecuta: Analyzer → Attacker → Educator → Generator
+    Con caché inteligente y feedback adaptativo
+    """
+    
+    def full_pipeline(self, password: str, user_id: str) -> Dict:
+        # 1. Análisis
+        analysis = analyzer.analyze(password)
+        
+        # 2. Ataque (intentar crackear)
+        attack_result = attacker.attack(password)
+        
+        # 3. Educación (explicar)
+        lessons = educator.educate(analysis, user_prefs)
+        
+        # 4. Generación (mejorar)
+        suggestions = generator.generate(password, user_prefs)
+        
+        return {
+            "análisis": analysis,
+            "atacante": attack_result,
+            "educación": lessons,
+            "sugerencias": suggestions,
+            "tokens_usados": 1200,
+
+
+
+            
+            """
+🔐 AGENTE 1: ANALIZADOR DE CONTRASEÑAS
+========================================
+ 
+Función: Evaluar fortaleza de una contraseña
+ 
+¿Qué hace?
+- Calcula entropía (bits de aleatoriedad)
+- Detecta patrones (nombres, números secuenciales, etc.)
+- Asigna puntuación 0-100
+- Estima tiempo para crackear con GPU moderna
+- Identifica problemas específicos
+ 
+Autor: Diego Mercedes Llauger (2026-0048)
+Para: Ingeniería en Ciberseguridad
+"""
+ 
+import re
+import math
+from typing import Dict, List
+from dataclasses import dataclass
+from datetime import datetime
+ 
+ 
+@dataclass
+class CharacterSet:
+    """Define conjuntos de caracteres para cálculo de entropía"""
+    lowercase: str = "abcdefghijklmnopqrstuvwxyz"
+    uppercase: str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    digits: str = "0123456789"
+    special: str = "!@#$%^&*()_+-=[]{}|;:,.<>?"
+ 
+ 
+class PasswordAnalyzer:
+    """
+    Analiza contraseñas y proporciona puntuación de fortaleza
+    
+    Ejemplo de uso:
+        analyzer = PasswordAnalyzer()
+        resultado = analyzer.analyze("diego2024")
+        print(resultado["fortaleza"])  # Output: DÉBIL
+        print(resultado["score"])      # Output: 25
+    """
+    
+    def __init__(self):
+        """Inicializa el analizador"""
+        self.charset = CharacterSet()
+        self.common_patterns = {
+            r"[0-9]{4}$": "año",
+            r"[0-9]{2}[a-z]+": "número+letras",
+            r"[a-z]{3,}[0-9]": "palabra+número",
+            r"(.)\1{2,}": "caracteres repetidos",
+            r"[a-z]{1,3}": "nombre corto",
+            r"[0-9]{1,3}": "número pequeño",
+        }
+        self.common_passwords = [
+            "123456", "password", "123456789", "12345678",
+            "12345", "1234567", "password123", "123123",
+            "1234567890", "000000", "111111", "abc123"
+        ]
+    
+    def analyze(self, password: str) -> Dict:
+        """
+        Analiza una contraseña completamente
+        
+        Args:
+            password: Contraseña a analizar
+            
+        Returns:
+            Diccionario con:
+                - score: 0-100
+                - fortaleza: DÉBIL/MEDIA/FUERTE/MUY_FUERTE
+                - entropía: bits
+                - tiempo_crack: estimación legible
+                - patrones: lista de patrones detectados
+                - problemas: lista de problemas específicos
+                - recomendaciones: qué mejorar
+        """
+        
+        # Validación
+        if not password or len(password) == 0:
+            return self._empty_password_result()
+        
+        # Calcular componentes
+        length_score = self._score_length(password)
+        entropy = self._calculate_entropy(password)
+        entropy_score = self._score_entropy(entropy)
+        
+        patterns = self._detect_patterns(password)
+        pattern_score = self._score_patterns(patterns)
+        
+        diversity = self._character_diversity(password)
+        diversity_score = self._score_diversity(diversity)
+        
+        problems = self._identify_problems(password, patterns, diversity)
+        
+        # Calcular score final (promedio ponderado)
+        total_score = (
+            length_score * 0.25 +      # 25% por longitud
+            entropy_score * 0.35 +     # 35% por entropía
+            diversity_score * 0.25 +   # 25% por diversidad
+            pattern_score * 0.15       # 15% por patrones (negativo)
+        )
+        total_score = max(0, min(100, total_score))  # Limitar 0-100
+        
+        # Determinar fortaleza
+        fortaleza = self._get_fortaleza(total_score)
+        
+        # Estimar tiempo para crackear
+        tiempo_crack = self._estimate_crack_time(entropy, password)
+        
+        return {
+            "timestamp": datetime.now().isoformat(),
+            "contraseña_analizada": "***" if len(password) > 0 else "vacía",
+            "longitud": len(password),
+            
+            # Puntuaciones desglosadas
+            "puntuaciones": {
+                "longitud": round(length_score, 1),
+                "entropía": round(entropy_score, 1),
+                "diversidad": round(diversity_score, 1),
+                "patrones": round(pattern_score, 1)
+            },
+            
+            # Resultado final
+            "score": round(total_score, 1),
+            "fortaleza": fortaleza,
+            
+            # Análisis técnico
+            "técnico": {
+                "entropía_bits": round(entropy, 2),
+                "charset_usado": self._get_charset_description(password),
+                "diversidad": {
+                    "minúsculas": diversity["lowercase"],
+                    "mayúsculas": diversity["uppercase"],
+                    "números": diversity["digits"],
+                    "especiales": diversity["special"]
+                }
+            },
+            
+            # Seguridad
+            "seguridad": {
+                "tiempo_crack_gpu": tiempo_crack["legible"],
+                "tiempo_crack_segundos": tiempo_crack["segundos"],
+                "combinaciones_posibles": f"2^{entropy:.0f}",
+                "consideración": tiempo_crack["consideración"]
+            },
+            
+            # Problemas detectados
+            "problemas": problems,
+            
+            # Patrones detectados
+            "patrones": patterns,
+            
+            # Recomendaciones
+            "recomendaciones": self._get_recomendaciones(
+                total_score, problems, len(password)
+            )
+        }
+    
+    def _score_length(self, password: str) -> float:
+        """
+        Puntúa según longitud
+        
+        POR QUÉ:
+        Cada carácter adicional multiplica combinaciones posibles.
+        8 caracteres = inseguro
+        12+ caracteres = comienza a ser seguro
+        16+ caracteres = muy seguro
+        """
+        length = len(password)
+        
+        # Tabla de puntuaciones
+        if length < 6:
+            return 10
+        elif length < 8:
+            return 25
+        elif length < 10:
+            return 45
+        elif length < 12:
+            return 65
+        elif length < 14:
+            return 80
+        else:  # 14+
+            return 95
+    
+    def _calculate_entropy(self, password: str) -> float:
+        """
+        Calcula entropía (bits de aleatoriedad)
+        
+        Fórmula: E = log2(N^L)
+        Donde:
+          N = número de caracteres posibles en el charset
+          L = longitud de la contraseña
+        
+        Ejemplo:
+          "diego2024" (9 caracteres, lowercase+digits)
+          N = 26 + 10 = 36 caracteres posibles
+          E = log2(36^9) = 46.9 bits
+          
+        ¿Qué significa?
+        - 40 bits = puede crackerse en horas (GPU)
+        - 60 bits = puede crackerse en años (GPU)
+        - 80 bits = imprácticamente seguro (GPU)
+        """
+        
+        # Determinar charset
+        charset_size = 0
+        if re.search(r'[a-z]', password):
+            charset_size += len(self.charset.lowercase)
+        if re.search(r'[A-Z]', password):
+            charset_size += len(self.charset.uppercase)
+        if re.search(r'[0-9]', password):
+            charset_size += len(self.charset.digits)
+        if re.search(rf'[{re.escape(self.charset.special)}]', password):
+            charset_size += len(self.charset.special)
+        
+        # Si no detecta nada (no debería pasar), asumir
+        if charset_size == 0:
+            charset_size = 26
+        
+        # Calcular entropía
+        entropy = math.log2(charset_size ** len(password))
+        return entropy
+    
+    def _score_entropy(self, entropy: float) -> float:
+        """Puntúa según entropía en bits"""
+        if entropy < 30:
+            return 15
+        elif entropy < 40:
+            return 30
+        elif entropy < 50:
+            return 50
+        elif entropy < 60:
+            return 70
+        elif entropy < 75:
+            return 85
+        else:
+            return 100
+    
+    def _character_diversity(self, password: str) -> Dict[str, bool]:
+        """Detecta qué tipos de caracteres usa"""
+        return {
+            "lowercase": bool(re.search(r'[a-z]', password)),
+            "uppercase": bool(re.search(r'[A-Z]', password)),
+            "digits": bool(re.search(r'[0-9]', password)),
+            "special": bool(re.search(rf'[{re.escape(self.charset.special)}]', password))
+        }
+    
+    def _score_diversity(self, diversity: Dict[str, bool]) -> float:
+        """Puntúa según diversidad de caracteres"""
+        count = sum(diversity.values())
+        
+        if count == 1:
+            return 20
+        elif count == 2:
+            return 50
+        elif count == 3:
+            return 75
+        else:  # 4
+            return 100
+    
+    def _detect_patterns(self, password: str) -> List[str]:
+        """Detecta patrones problemáticos"""
+        patterns = []
+        
+        # Patrones peligrosos
+        if re.search(r'[0-9]{4}$', password):
+            patterns.append("termina_en_año")
+        
+        if re.search(r'[0-9]{1,3}$', password):
+            patterns.append("termina_en_número")
+        
+        if re.search(r'^[a-zA-Z]{1,5}', password):
+            patterns.append("comienza_con_palabra_corta")
+        
+        if re.search(r'(.)\1{2,}', password):
+            patterns.append("caracteres_repetidos")
+        
+        if re.search(r'123|234|345|456|567|678|789|890', password):
+            patterns.append("números_secuenciales")
+        
+        if re.search(r'abc|bcd|cde|def', password.lower()):
+            patterns.append("letras_secuenciales")
+        
+        if password.lower() in self.common_passwords:
+            patterns.append("contraseña_común")
+        
+        return patterns if patterns else ["ninguno"]
+    
+    def _score_patterns(self, patterns: List[str]) -> float:
+        """Puntúa negativamente según patrones detectados"""
+        # Empezar alto, restar por cada patrón
+        score = 100
+        
+        penalties = {
+            "termina_en_año": 15,
+            "termina_en_número": 10,
+            "comienza_con_palabra_corta": 10,
+            "caracteres_repetidos": 15,
+            "números_secuenciales": 20,
+            "letras_secuenciales": 20,
+            "contraseña_común": 30,
+            "ninguno": 0
+        }
+        
+        for pattern in patterns:
+            score -= penalties.get(pattern, 0)
+        
+        return max(0, score)
+    
+    def _identify_problems(self, password: str, patterns: List[str], 
+                          diversity: Dict[str, bool]) -> List[str]:
+        """Identifica problemas específicos"""
+        problems = []
+        
+        # Longitud
+        if len(password) < 8:
+            problems.append("Demasiado corta (menos de 8 caracteres)")
+        
+        # Diversidad
+        diversity_count = sum(diversity.values())
+        if diversity_count == 1:
+            problems.append("Solo usa un tipo de carácter")
+        elif diversity_count == 2:
+            problems.append("Usa solo 2 tipos de caracteres (necesita más variedad)")
+        
+        if not diversity["uppercase"]:
+            problems.append("Falta MAYÚSCULAS")
+        
+        if not diversity["special"]:
+            problems.append("Falta símbolos especiales (!@#$%)")
+        
+        # Patrones
+        if "caracteres_repetidos" in patterns:
+            problems.append("Tiene caracteres repetidos (AAA, 111)")
+        
+        if "números_secuenciales" in patterns:
+            problems.append("Números en secuencia (123, 456)")
+        
+        if "contraseña_común" in patterns:
+            problems.append("Es una contraseña común y muy fácil de crackear")
+        
+        if "termina_en_año" in patterns:
+            problems.append("Termina en año (patrón fácil de adivinar)")
+        
+        return problems if problems else ["Ninguno detectado"]
+    
+    def _get_charset_description(self, password: str) -> str:
+        """Describe el charset utilizado"""
+        has_lower = bool(re.search(r'[a-z]', password))
+        has_upper = bool(re.search(r'[A-Z]', password))
+        has_digits = bool(re.search(r'[0-9]', password))
+        has_special = bool(re.search(rf'[{re.escape(self.charset.special)}]', password))
+        
+        parts = []
+        if has_lower:
+            parts.append("minúsculas")
+        if has_upper:
+            parts.append("MAYÚSCULAS")
+        if has_digits:
+            parts.append("números")
+        if has_special:
+            parts.append("símbolos")
+        
+        return " + ".join(parts) if parts else "ninguno"
+    
+    def _estimate_crack_time(self, entropy: float, password: str) -> Dict:
+        """
+        Estima tiempo para crackear con GPU moderna
+        
+        GPU moderna: ~10 mil millones de intentos/segundo (10^10 hashes/seg)
+        Fórmula: Tiempo (segundos) = 2^entropía / 2 / velocidad GPU
+        
+        El /2 es porque en promedio necesitas probar la mitad antes de encontrar
+        """
+        
+        # Velocidad de GPU moderna (algoritmos como bcrypt/scrypt son más lentos)
+        gpu_speed = 1e10  # 10 mil millones hashes/segundo
+        
+        # Casos especiales
+        if password in self.common_passwords:
+            return {
+                "segundos": 0.001,
+                "legible": "Menos de 1 ms (está en diccionario)",
+                "consideración": "CRÍTICA: Se crackea instantáneamente"
+            }
+        
+        # Cálculo
+        combinaciones_posibles = 2 ** entropy
+        tiempo_promedio = combinaciones_posibles / 2 / gpu_speed
+        
+        # Convertir a unidad legible
+        if tiempo_promedio < 1:
+            return {
+                "segundos": tiempo_promedio,
+                "legible": f"{tiempo_promedio*1000:.2f} milisegundos",
+                "consideración": "CRÍTICA: Muy rápido"
+            }
+        elif tiempo_promedio < 60:
+            return {
+                "segundos": tiempo_promedio,
+                "legible": f"{tiempo_promedio:.1f} segundos",
+                "consideración": "CRÍTICA: Demasiado rápido"
+            }
+        elif tiempo_promedio < 3600:
+            return {
+                "segundos": tiempo_promedio,
+                "legible": f"{tiempo_promedio/60:.1f} minutos",
+                "consideración": "CRÍTICA: Muy vulnerable"
+            }
+        elif tiempo_promedio < 86400:
+            return {
+                "segundos": tiempo_promedio,
+                "legible": f"{tiempo_promedio/3600:.1f} horas",
+                "consideración": "CRÍTICA: Vulnerable"
+            }
+        elif tiempo_promedio < 86400 * 365:
+            return {
+                "segundos": tiempo_promedio,
+                "legible": f"{tiempo_promedio/(86400):.1f} días",
+                "consideración": "ADVERTENCIA: Débil a largo plazo"
+            }
+        elif tiempo_promedio < 86400 * 365 * 100:
+            return {
+                "segundos": tiempo_promedio,
+                "legible": f"{tiempo_promedio/(86400*365):.1f} años",
+                "consideración": "ACEPTABLE pero mejorable"
+            }
+        else:
+            return {
+                "segundos": tiempo_promedio,
+                "legible": f"{tiempo_promedio/(86400*365*100):.0f}+ siglos",
+                "consideración": "BUENO: Muy difícil de crackear"
+            }
+    
+    def _get_fortaleza(self, score: float) -> str:
+        """Clasifica fortaleza según score"""
+        if score < 25:
+            return "DÉBIL"
+        elif score < 50:
+            return "MEDIA"
+        elif score < 75:
+            return "FUERTE"
+        else:
+            return "MUY_FUERTE"
+    
+    def _get_recomendaciones(self, score: float, problems: List[str], 
+                            length: int) -> List[str]:
+        """Genera recomendaciones personalizadas"""
+        recomendaciones = []
+        
+        if length < 12:
+            recomendaciones.append("Aumenta a 12+ caracteres (mínimo recomendado)")
+        
+        if "Falta MAYÚSCULAS" in problems:
+            recomendaciones.append("Incluye al menos 1 MAYÚSCULA")
+        
+        if "Falta símbolos especiales" in problems:
+            recomendaciones.append("Incluye símbolos especiales: !@#$%^&*()")
+        
+        if "caracteres_repetidos" in str(problems):
+            recomendaciones.append("Evita caracteres repetidos (AAA, 111)")
+        
+        if score < 50:
+            recomendaciones.append("Cambia la contraseña pronto")
+        
+        if not recomendaciones:
+            recomendaciones.append("Contraseña aceptable, pero sigue mejorando")
+        
+        return recomendaciones
+    
+    def _empty_password_result(self) -> Dict:
+        """Resultado para contraseña vacía"""
+        return {
+            "error": "Contraseña vacía",
+            "score": 0,
+            "fortaleza": "NULA"
+        }
+ 
+ 
+# ============================================================================
+# EJEMPLO DE USO
+# ============================================================================
+ 
+if __name__ == "__main__":
+    print("\n" + "="*70)
+    print("🔐 ANALIZADOR DE CONTRASEÑAS - EJEMPLOS")
+    print("="*70)
+    
+    analyzer = PasswordAnalyzer()
+    
+    # Ejemplo 1: Contraseña débil
+    print("\n[EJEMPLO 1] Contraseña débil")
+    resultado1 = analyzer.analyze("diego2024")
+    print(f"Contraseña: diego2024")
+    print(f"Score: {resultado1['score']}/100")
+    print(f"Fortaleza: {resultado1['fortaleza']}")
+    print(f"Problemas: {resultado1['problemas']}")
+    print(f"Tiempo crack: {resultado1['seguridad']['tiempo_crack_gpu']}")
+    
+    # Ejemplo 2: Contraseña media
+    print("\n[EJEMPLO 2] Contraseña media")
+    resultado2 = analyzer.analyze("Diego2024#Seg")
+    print(f"Contraseña: Diego2024#Seg")
+    print(f"Score: {resultado2['score']}/100")
+    print(f"Fortaleza: {resultado2['fortaleza']}")
+    print(f"Entropía: {resultado2['técnico']['entropía_bits']} bits")
+    
+    # Ejemplo 3: Contraseña fuerte
+    print("\n[EJEMPLO 3] Contraseña fuerte")
+    resultado3 = analyzer.analyze("Dr^nT#9$kL2024!mQ%vP@8")
+    print(f"Contraseña: Dr^nT#9$kL2024!mQ%vP@8")
+    print(f"Score: {resultado3['score']}/100")
+    print(f"Fortaleza: {resultado3['fortaleza']}")
+    print(f"Tiempo crack: {resultado3['seguridad']['tiempo_crack_gpu']}")
+    
+    print("\n" + "="*70)"desde_cache": False }
+            """
+⚔️ AGENTE 2: ATACANTE DE CONTRASEÑAS
+====================================
+ 
+Función: Intentar crackear contraseñas usando diferentes métodos
+ 
+Métodos disponibles:
+1. DICCIONARIO: Palabras comunes + números
+2. FUERZA BRUTA: Todas las combinaciones (lento pero garantizado)
+3. PATRONES: Nombre + números comunes
+4. MUTACIONES: Variantes de palabra base
+ 
+¿IMPORTANTE? Este agente es EDUCATIVO.
+Solo crackea contraseñas que TÚ proporciones.
+No intenta crackear sistemas reales (eso sería ilegal).
+ 
+Autor: Diego Mercedes Llauger (2026-0048)
+Para: Ingeniería en Ciberseguridad
+"""
+ 
+import itertools
+import time
+import hashlib
+from typing import Dict, List, Tuple, Optional
+from dataclasses import dataclass
+from enum import Enum
+ 
+ 
+class AttackMethod(Enum):
+    """Métodos de ataque disponibles"""
+    DICCIONARIO = "diccionario"
+    FUERZA_BRUTA = "fuerza_bruta"
+    PATRONES = "patrones"
+    MUTACIONES = "mutaciones"
+ 
+ 
+@dataclass
+class AttackResult:
+    """Resultado de un ataque"""
+    metodo: str
+    se_crackea: bool
+    intento_exitoso: Optional[str]
+    intentos_necesarios: int
+    tiempo_segundos: float
+    confianza: int  # 0-100
+    razón: str
+ 
+ 
+class PasswordAttacker:
+    """
+    Intenta crackear contraseñas con diferentes métodos
+    
+    Ejemplo:
+        attacker = PasswordAttacker()
+        resultado = attacker.attack("diego2024", method="diccionario")
+        if resultado.se_crackea:
+            print(f"Se crackea en {resultado.tiempo_segundos}s")
+    """
+    
+    def __init__(self):
+        """Inicializa el atacante"""
+        # Diccionarios de palabras comunes
+        self.common_words = [
+            # Nombres comunes (hispanohablantes)
+            "diego", "juan", "maria", "jose", "carlos", "luis",
+            "ana", "pedro", "manuel", "rosa", "francisco", "isabel",
+            
+            # Palabras comunes en contraseñas
+            "password", "123456", "qwerty", "admin", "letmein",
+            "welcome", "monkey", "dragon", "master", "sunshine",
+            
+            # Palabras en español
+            "sol", "luna", "amor", "vida", "fuego", "agua",
+            "tierra", "cielo", "noche", "día", "gato", "perro",
+            
+            # Palabras técnicas
+            "clave", "secreto", "privado", "codigo", "sistema",
+        ]
+        
+        self.common_numbers = [
+            "123", "456", "789", "2024", "2023", "2022", "2025",
+            "2000", "1999", "1234", "5678", "9999", "1111", "0000",
+            # Años de nacimiento comunes
+            "1990", "1995", "2000", "2005", "2010"
+        ]
+        
+        self.common_symbols = "!@#$%^&*()"
+    
+    def attack(self, password: str, method: str = "diccionario") -> Dict:
+        """
+        Intenta crackear una contraseña
+        
+        Args:
+            password: Contraseña objetivo
+            method: Método de ataque ("diccionario", "fuerza_bruta", etc.)
+            
+        Returns:
+            Diccionario con resultados del ataque
+        """
+        
+        start_time = time.time()
+        
+        # Seleccionar método
+        if method == "diccionario":
+            result = self._attack_dictionary(password)
+        elif method == "fuerza_bruta":
+            result = self._attack_brute_force(password)
+        elif method == "patrones":
+            result = self._attack_patterns(password)
+        elif method == "mutaciones":
+            result = self._attack_mutations(password)
+        else:
+            return self._error_result(f"Método desconocido: {method}")
+        
+        elapsed = time.time() - start_time
+        
+        # Compilar resultado
+        return {
+            "timestamp": time.time(),
+            "objetivo": f"***{password[-3:]}" if len(password) > 3 else "***",
+            "método": method,
+            
+            # Resultado del ataque
+            "se_crackea": result.se_crackea,
+            "intento_exitoso": result.intento_exitoso,
+            "intentos_necesarios": result.intentos_necesarios,
+            
+            # Métricas
+            "tiempo_ejecución_segundos": round(elapsed, 4),
+            "tiempo_estimado_real": self._estimate_real_time(
+                result.intentos_necesarios, elapsed
+            ),
+            "intentos_por_segundo": round(
+                result.intentos_necesarios / max(elapsed, 0.001), 0
+            ),
+            
+            # Confianza y razón
+            "confianza": result.confianza,
+            "razón": result.razón,
+            
+            # Contexto educativo
+            "educativo": {
+                "qué_aprendes": self._get_lessons(method, result),
+                "cómo_defenderse": self._get_defense(method),
+                "impacto_seguridad": self._get_impact(result)
+            }
+        }
+    
+    def _attack_dictionary(self, password: str) -> AttackResult:
+        """
+        MÉTODO 1: DICCIONARIO
+        
+        Estrategia: Probar palabras comunes + números comunes
+        
+        ¿POR QUÉ FUNCIONA?
+        Muchas personas crean contraseñas con:
+        - Su nombre (diego)
+        - Nombre + año (diego2024)
+        - Nombre + número pequeño (diego123)
+        
+        El atacante prueba todas las combinaciones comunes.
+        """
+        
+        intentos = 0
+        max_intentos = 100000
+        
+        # Variantes a probar
+        candidatos = self._generate_dictionary_candidates()
+        
+        for candidato in candidatos:
+            intentos += 1
+            
+            if candidato == password:
+                return AttackResult(
+                    metodo="diccionario",
+                    se_crackea=True,
+                    intento_exitoso=password,
+                    intentos_necesarios=intentos,
+                    tiempo_segundos=0,
+                    confianza=100,
+                    razón=f"Encontrada en diccionario después de {intentos} intentos"
+                )
+            
+            if intentos > max_intentos:
+                break
+        
+        return AttackResult(
+            metodo="diccionario",
+            se_crackea=False,
+            intento_exitoso=None,
+            intentos_necesarios=intentos,
+            tiempo_segundos=0,
+            confianza=0,
+            razón="No está en diccionario (probablemente aleatoria)"
+        )
+    
+    def _attack_brute_force(self, password: str) -> AttackResult:
+        """
+        MÉTODO 2: FUERZA BRUTA
+        
+        Estrategia: Probar TODAS las combinaciones posibles
+        
+        ¿POR QUÉ FUNCIONA?
+        Eventualmente prueba la correcta (garantizado)
+        
+        ¿POR QUÉ ES LENTO?
+        Combinaciones crecen exponencialmente:
+        - 6 caracteres (solo letras): 308 millones
+        - 8 caracteres (letras+números): 2.8 billones
+        - 10 caracteres (todo): 62 ^ 10 = imposible rápido
+        
+        En nuestro caso, limitamos a contraseñas cortas.
+        """
+        
+        # Para este proyecto educativo, limitamos
+        if len(password) > 6:
+            return AttackResult(
+                metodo="fuerza_bruta",
+                se_crackea=False,
+                intento_exitoso=None,
+                intentos_necesarios=0,
+                tiempo_segundos=0,
+                confianza=0,
+                razón="Contraseña muy larga para fuerza bruta (>6 caracteres)"
+            )
+        
+        # Generar todas las combinaciones
+        intentos = 0
+        charset = "abcdefghijklmnopqrstuvwxyz0123456789"
+        
+        for length in range(1, len(password) + 1):
+            for combo in itertools.product(charset, repeat=length):
+                candidato = ''.join(combo)
+                intentos += 1
+                
+                if candidato == password:
+                    return AttackResult(
+                        metodo="fuerza_bruta",
+                        se_crackea=True,
+                        intento_exitoso=password,
+                        intentos_necesarios=intentos,
+                        tiempo_segundos=0,
+                        confianza=100,
+                        razón=f"Encontrada por fuerza bruta ({intentos} intentos)"
+                    )
+        
+        return AttackResult(
+            metodo="fuerza_bruta",
+            se_crackea=False,
+            intento_exitoso=None,
+            intentos_necesarios=intentos,
+            tiempo_segundos=0,
+            confianza=0,
+            razón="No encontrada (muy larga o contiene caracteres no probados)"
+        )
+    
+    def _attack_patterns(self, password: str) -> AttackResult:
+        """
+        MÉTODO 3: PATRONES
+        
+        Estrategia: Explotar patrones humanos comunes
+        
+        PATRONES PROBADOS:
+        1. Nombre + año: diego2024
+        2. Nombre + número: diego123
+        3. Palabra + número: password123
+        4. Nombre + símbolo + número: diego@2024
+        
+        ¿POR QUÉ FUNCIONA?
+        Las personas siguen patrones predecibles.
+        """
+        
+        intentos = 0
+        max_intentos = 100000
+        
+        # Generar candidatos basados en patrones
+        candidatos = self._generate_pattern_candidates()
+        
+        for candidato in candidatos:
+            intentos += 1
+            
+            if candidato == password:
+                return AttackResult(
+                    metodo="patrones",
+                    se_crackea=True,
+                    intento_exitoso=password,
+                    intentos_necesarios=intentos,
+                    tiempo_segundos=0,
+                    confianza=95,
+                    razón=f"Coincide con patrón común ({intentos} intentos)"
+                )
+            
+            if intentos > max_intentos:
+                break
+        
+        return AttackResult(
+            metodo="patrones",
+            se_crackea=False,
+            intento_exitoso=None,
+            intentos_necesarios=intentos,
+            tiempo_segundos=0,
+            confianza=0,
+            razón="No coincide con patrones comunes"
+        )
+    
+    def _attack_mutations(self, password: str) -> AttackResult:
+        """
+        MÉTODO 4: MUTACIONES
+        
+        Estrategia: Tomar una palabra base y probar variantes
+        
+        MUTACIONES:
+        1. Cambios de mayúsculas: diego → Diego → DIEGO
+        2. Cambios de números: diego → diego1 → diego12 → diego123
+        3. Cambios de símbolos: diego → diego! → diego@
+        
+        ¿POR QUÉ FUNCIONA?
+        Si conoces la palabra base, probar mutaciones es muy rápido.
+        """
+        
+        intentos = 0
+        
+        # Extender palabras base con mutaciones
+        for palabra in self.common_words:
+            candidatos = self._mutate_word(palabra)
+            
+            for candidato in candidatos:
+                intentos += 1
+                
+                if candidato == password:
+                    return AttackResult(
+                        metodo="mutaciones",
+                        se_crackea=True,
+                        intento_exitoso=password,
+                        intentos_necesarios=intentos,
+                        tiempo_segundos=0,
+                        confianza=90,
+                        razón=f"Mutación de palabra común ({intentos} intentos)"
+                    )
+        
+        return AttackResult(
+            metodo="mutaciones",
+            se_crackea=False,
+            intento_exitoso=None,
+            intentos_necesarios=intentos,
+            tiempo_segundos=0,
+            confianza=0,
+            razón="No es mutación de palabras comunes"
+        )
+    
+    def _generate_dictionary_candidates(self) -> List[str]:
+        """Genera candidatos usando diccionario"""
+        candidatos = []
+        
+        # Palabras base
+        candidatos.extend(self.common_words)
+        
+        # Palabra + número
+        for palabra in self.common_words[:10]:  # Top 10
+            for num in self.common_numbers:
+                candidatos.append(f"{palabra}{num}")
+                candidatos.append(f"{num}{palabra}")
+        
+        # Palabra + palabra
+        for p1 in self.common_words[:5]:
+            for p2 in self.common_words[:5]:
+                if p1 != p2:
+                    candidatos.append(f"{p1}{p2}")
+        
+        # Mayúsculas
+        for palabra in self.common_words[:5]:
+            candidatos.append(palabra.capitalize())
+        
+        return candidatos
+    
+    def _generate_pattern_candidates(self) -> List[str]:
+        """Genera candidatos basados en patrones comunes"""
+        candidatos = []
+        
+        # Patrón: nombre + año
+        for nombre in ["diego", "juan", "maria", "carlos", "admin"]:
+            for año in ["2024", "2023", "2022", "2025", "2000", "1999"]:
+                candidatos.append(f"{nombre}{año}")
+                candidatos.append(f"{nombre}_{año}")
+                candidatos.append(f"{año}{nombre}")
+        
+        # Patrón: palabra + número
+        for palabra in ["password", "admin", "user", "test"]:
+            for num in ["123", "456", "789", "1", "123456"]:
+                candidatos.append(f"{palabra}{num}")
+        
+        # Patrón: nombre + símbolo + número
+        for nombre in ["diego", "admin"]:
+            for símbolo in self.common_symbols:
+                for num in ["123", "2024"]:
+                    candidatos.append(f"{nombre}{símbolo}{num}")
+        
+        return candidatos
+    
+    def _mutate_word(self, palabra: str) -> List[str]:
+        """Genera mutaciones de una palabra"""
+        mutaciones = [palabra]
+        
+        # Capitalize
+        mutaciones.append(palabra.capitalize())
+        mutaciones.append(palabra.upper())
+        
+        # Con números
+        for num in ["1", "12", "123", "2024"]:
+            mutaciones.append(f"{palabra}{num}")
+            mutaciones.append(f"{num}{palabra}")
+        
+        # Con símbolos
+        for símbolo in self.common_symbols:
+            mutaciones.append(f"{palabra}{símbolo}")
+        
+        return mutaciones
+    
+    def _estimate_real_time(self, intentos: int, tiempo_ejecución: float) -> Dict:
+        """
+        Estima tiempo real en sistemas
+        
+        En nuestro código educativo:
+        - Hacemos ~100,000 intentos/segundo (en memoria)
+        
+        En sistemas reales:
+        - Bcrypt/Scrypt: ~100,000 intentos/segundo
+        - MD5: ~1,000,000,000 intentos/segundo
+        - Pero bcrypt es lo correcto para contraseñas
+        """
+        
+        # Velocidad de GPU moderna con bcrypt
+        intentos_por_segundo = 1e5  # 100k hashes/seg
+        
+        tiempo_real = intentos / intentos_por_segundo
+        
+        if tiempo_real < 1:
+            return {
+                "segundos": tiempo_real,
+                "legible": f"{tiempo_real*1000:.2f} ms",
+                "contexto": "Instantáneo"
+            }
+        elif tiempo_real < 3600:
+            return {
+                "segundos": tiempo_real,
+                "legible": f"{tiempo_real:.0f} segundos",
+                "contexto": "Cuestión de segundos"
+            }
+        else:
+            return {
+                "segundos": tiempo_real,
+                "legible": f"{tiempo_real/3600:.1f} horas",
+                "contexto": "Tomaría horas"
+            }
+    
+    def _get_lessons(self, metodo: str, resultado: AttackResult) -> List[str]:
+        """¿Qué aprendes de este ataque?"""
+        if not resultado.se_crackea:
+            return [
+                "Esta contraseña no se puede crackear con este método",
+                "Probablemente es aleatoria y sin patrones comunes"
+            ]
+        
+        lecciones = {
+            "diccionario": [
+                "Las contraseñas obvias se encuentran en diccionarios",
+                "Combinaciones simples (nombre+año) son inseguras",
+                "No uses palabras comunes en tu contraseña"
+            ],
+            "fuerza_bruta": [
+                "El atacante eventualmente prueba todas las combinaciones",
+                "Contraseñas cortas son vulnerables a fuerza bruta",
+                "Aumenta longitud para hacer fuerza bruta impráctica"
+            ],
+            "patrones": [
+                "Los humanos seguimos patrones predecibles",
+                "Nombre+año, palabra+número son patrones débiles",
+                "Usa contraseña completamente aleatoria"
+            ],
+            "mutaciones": [
+                "Cambios simples (mayúsculas, números) son insuficientes",
+                "No basta con capitalizar o añadir 123",
+                "La palabra base debe ser impredecible"
+            ]
+        }
+        
+        return lecciones.get(metodo, ["Método no identificado"])
+    
+    def _get_defense(self, metodo: str) -> str:
+        """¿Cómo defenderse de este ataque?"""
+        defensas = {
+            "diccionario": "No uses palabras comunes ni patrones obvios",
+            "fuerza_bruta": "Usa contraseñas largas (16+ caracteres)",
+            "patrones": "Sé completamente aleatorio, evita toda lógica",
+            "mutaciones": "Cambia completamente, no hagas pequeñas mutaciones"
+        }
+        return defensas.get(metodo, "Método no identificado")
+    
+    def _get_impact(self, resultado: AttackResult) -> Dict:
+        """Impacto de seguridad"""
+        if resultado.se_crackea:
+            return {
+                "severidad": "ALTA",
+                "impacto": "Puede ser crackeada con relativa facilidad",
+                "tiempo_reacción": "Minutos a horas",
+                "recomendación": "Cambiar contraseña INMEDIATAMENTE"
+            }
+        else:
+            return {
+                "severidad": "BAJA",
+                "impacto": "Resistente a este método de ataque",
+                "tiempo_reacción": "No aplicable",
+                "recomendación": "Sigue siendo buena contraseña"
+            }
+    
+    def _error_result(self, error: str) -> Dict:
+        """Resultado de error"""
+        return {
+            "error": error,
+            "se_crackea": False
+        }
+ 
+ 
+# ============================================================================
+# EJEMPLO DE USO
+# ============================================================================
+ 
+if __name__ == "__main__":
+    print("\n" + "="*70)
+    print("⚔️ ATACANTE DE CONTRASEÑAS - EJEMPLOS")
+    print("="*70)
+    
+    attacker = PasswordAttacker()
+    
+    # Prueba 1: Contraseña débil con diccionario
+    print("\n[PRUEBA 1] Ataque por diccionario")
+    resultado1 = attacker.attack("diego2024", method="diccionario")
+    print(f"Contraseña: diego2024")
+    print(f"¿Se crackea? {resultado1['se_crackea']}")
+    print(f"Intentos: {resultado1['intentos_necesarios']}")
+    print(f"Razón: {resultado1['razón']}")
+    
+    # Prueba 2: Fuerza bruta en contraseña corta
+    print("\n[PRUEBA 2] Ataque por fuerza bruta")
+    resultado2 = attacker.attack("abc123", method="fuerza_bruta")
+    print(f"Contraseña: abc123")
+    print(f"¿Se crackea? {resultado2['se_crackea']}")
+    print(f"Intentos: {resultado2['intentos_necesarios']}")
+    
+    # Prueba 3: Patrones
+    print("\n[PRUEBA 3] Ataque por patrones")
+    resultado3 = attacker.attack("juan2024", method="patrones")
+    print(f"Contraseña: juan2024")
+    print(f"¿Se crackea? {resultado3['se_crackea']}")
+    print(f"Confianza: {resultado3['confianza']}%")
+    
+    print("\n" + "="*70)
+
+"""
+📚 AGENTES 3, 4, 5 + ORQUESTADOR
+=================================
+ 
+Agente 3: EDUCADOR - Explica resultados del análisis
+Agente 4: GENERADOR - Crea contraseñas mejoradas
+Agente 5: APRENDIZ - Adapta según feedback del usuario
+Orquestador: Coordina todo
+ 
+Referencia del proyecto anterior:
+https://github.com/diegomercedesllauger-cloud/sistema-de-5-agentes-adaptables-
+ 
+Reutilizamos:
+- Arquitectura de agentes
+- Orquestador (coordina flujo)
+- Caché (no repetir análisis)
+- Feedback adaptativo (usuario enseña al sistema)
+ 
+Autor: Diego Mercedes Llauger (2026-0048)
+Para: Ingeniería en Ciberseguridad
+"""
+ 
+import json
+import os
+import random
+import string
+from typing import Dict, List, Optional
+from datetime import datetime
+from dataclasses import dataclass
+ 
+ 
+# ============================================================================
+# AGENTE 3: EDUCADOR
+# ============================================================================
+ 
+class PasswordEducator:
+    """
+    Transforma datos técnicos en lecciones personalizadas
+    
+    ¿POR QUÉ?
+    El Analizador devuelve: "entropía=26.3 bits"
+    El usuario piensa: "¿Eso qué significa?"
+    
+    El Educador convierte eso en: "Tu contraseña puede crackerse en 0.5 segundos"
+    Mucho más comprensible.
+    """
+    
+    def __init__(self):
+        """Inicializa el educador"""
+        pass
+    
+    def educate(self, analisis: Dict, ataque: Dict, 
+                user_prefs: Optional[Dict] = None) -> Dict:
+        """
+        Convierte análisis técnico en educación
+        
+        Args:
+            analisis: Resultado del Analizador
+            ataque: Resultado del Atacante
+            user_prefs: Preferencias del usuario (nivel de detalle)
+            
+        Returns:
+            Diccionario con lecciones personalizadas
+        """
+        
+        if user_prefs is None:
+            user_prefs = {"nivel_detalle": "simple"}
+        
+        nivel = user_prefs.get("nivel_detalle", "simple")
+        
+        # Generar lecciones basadas en problemas
+        lecciones = []
+        
+        for problema in analisis.get("problemas", []):
+            leccion = self._problema_a_leccion(problema, nivel)
+            if leccion:
+                lecciones.append(leccion)
+        
+        # Resumen general
+        resumen = self._generar_resumen(
+            analisis,
+            ataque,
+            nivel
+        )
+        
+        return {
+            "timestamp": datetime.now().isoformat(),
+            "usuario_id": user_prefs.get("user_id", "anonimo"),
+            
+            "resumen_ejecutivo": resumen,
+            
+            "lecciones": lecciones,
+            
+            "siguientes_pasos": self._generar_pasos(
+                analisis,
+                nivel
+            ),
+            
+            "recursos": {
+                "buenas_prácticas": [
+                    "Usa 12+ caracteres",
+                    "Mezcla MAYÚSCULAS, minúsculas, números, símbolos",
+                    "Evita patrones (nombres, años, secuencias)",
+                    "No reutilices contraseña en múltiples sitios",
+                    "Usa gestor de contraseñas"
+                ],
+                "herramientas_recomendadas": [
+                    "KeePass o Bitwarden (gestor de contraseñas)",
+                    "1Password (pago pero excelente)",
+                    "Authenticator apps (2FA: Google Authenticator)",
+                    "Haveibeenpwned.com (verifica si estás en breach)"
+                ]
+            },
+            
+            "nivel_detalles": nivel
+        }
+    
+    def _problema_a_leccion(self, problema: str, nivel: str) -> Optional[Dict]:
+        """Convierte un problema en una lección"""
+        
+        lecciones_map = {
+            "Demasiado corta": {
+                "simple": "Tu contraseña es demasiado corta. Necesita 12+ caracteres.",
+                "intermedio": "Cada carácter adicional multiplica exponencialmente las combinaciones posibles. 8 chars = inseguro, 12+ = aceptable.",
+                "avanzado": "La entropía aumenta con cada carácter: E = log2(charset^length). Aumentar 1 carácter suma ~5.2 bits de entropía."
+            },
+            "Solo usa un tipo": {
+                "simple": "Usa diferentes tipos: MAYÚSCULAS, minúsculas, números, símbolos.",
+                "intermedio": "Limitar a un tipo de carácter reduce el charset efectivo. MAYÚS+minús+números = 62 opciones por carácter.",
+                "avanzado": "Charset afecta directamente: charset pequeño → menor entropía → más predecible."
+            },
+            "Falta MAYÚSCULAS": {
+                "simple": "Añade al menos 1 letra MAYÚSCULA.",
+                "intermedio": "Las MAYÚSCULAS duplican el charset de letras (26 → 52). Imprescindible para entropía.",
+                "avanzado": "MAYÚS es requisito mínimo. Idealmente distribuidas, no solo al inicio."
+            },
+            "Falta símbolos": {
+                "simple": "Usa símbolos: !@#$%^&*()",
+                "intermedio": "Símbolos incrementan charset de 62 a 94+ caracteres. Enorme aumento de entropía.",
+                "avanzado": "Símbolos no alfanuméricos agregan ~6 bits por carácter extra."
+            },
+            "Caractereres repetidos": {
+                "simple": "Evita AAA, 111, etc.",
+                "intermedio": "Repeticiones indican patrón. Debilita contra ataques de diccionario.",
+                "avanzado": "Patrones reducen espacio de búsqueda efectivo."
+            },
+            "Termina en año": {
+                "simple": "No termines con años (2024, 1999, etc.).",
+                "intermedio": "Los años son patrones humanos obvios. Atacante prueba todos los años primero.",
+                "avanzado": "Patrón predecible = primeros en diccionario del atacante. Evitar completamente."
+            }
+        }
+        
+        return lecciones_map.get(problema, {}).get(nivel)
+    
+    def _generar_resumen(self, analisis: Dict, ataque: Dict, 
+                        nivel: str) -> str:
+        """Genera resumen ejecutivo"""
+        
+        fortaleza = analisis.get("fortaleza", "DESCONOCIDA")
+        se_crackea = ataque.get("se_crackea", False)
+        
+        if se_crackea:
+            if nivel == "simple":
+                return (
+                    f"⚠️ CRÍTICA: Tu contraseña se puede crackear. "
+                    f"Cambiar INMEDIATAMENTE."
+                )
+            else:
+                return (
+                    f"Tu contraseña es vulnerable a ataques. "
+                    f"Se crackea en {ataque.get('tiempo_estimado_real', {}).get('legible')}. "
+                    f"Crear nueva contraseña forte."
+                )
+        else:
+            if fortaleza == "MUY_FUERTE":
+                return "✓ Excelente contraseña. Resistente a ataques."
+            elif fortaleza == "FUERTE":
+                return "✓ Buena contraseña. Aceptable pero puede mejorar."
+            else:
+                return "⚠️ Contraseña débil. Seguir recomendaciones."
+    
+    def _generar_pasos(self, analisis: Dict, nivel: str) -> List[str]:
+        """Genera pasos a seguir"""
+        
+        pasos = []
+        score = analisis.get("score", 0)
+        
+        # Paso 1: Evaluación
+        pasos.append(f"1. Tu puntuación actual: {score}/100")
+        
+        # Paso 2: Problemas específicos
+        problemas = analisis.get("problemas", [])
+        if problemas:
+            pasos.append(f"2. Problemas encontrados: {len(problemas)}")
+            pasos.append("   " + " • ".join(problemas[:3]))
+        
+        # Paso 3: Mejora
+        if score < 75:
+            pasos.append("3. Crear contraseña más fuerte (ver sugerencias)")
+        else:
+            pasos.append("3. Contraseña aceptable, considera mejoras")
+        
+        # Paso 4: Protección
+        pasos.append("4. Usar gestor de contraseñas")
+        pasos.append("5. Activar autenticación de dos factores (2FA)")
+        
+        return pasos
+ 
+ 
+# ============================================================================
+# AGENTE 4: GENERADOR
+# ============================================================================
+ 
+class PasswordGenerator:
+    """
+    Genera contraseñas mejoradas
+    
+    Crea 3 variantes:
+    - SIMPLE: Mejora mínima
+    - BALANCEADA: Balance entre seguridad y usabilidad
+    - PARANOIA: Máxima seguridad (aleatoria)
+    """
+    
+    def __init__(self):
+        """Inicializa el generador"""
+        self.symbols = "!@#$%^&*()"
+    
+    def generate(self, base_password: Optional[str] = None,
+                user_prefs: Optional[Dict] = None) -> Dict:
+        """
+        Genera contraseñas mejoradas
+        
+        Args:
+            base_password: Contraseña actual (para mejora incremental)
+            user_prefs: Preferencias (complejidad, longitud)
+            
+        Returns:
+            3 sugerencias: simple, balanceada, paranoia
+        """
+        
+        if user_prefs is None:
+            user_prefs = {}
+        
+        preferidas = user_prefs.get("complejidad", "balanceada")
+        longitud_min = user_prefs.get("longitud_minima", 12)
+        
+        sugerencias = [
+            self._generar_simple(longitud_min),
+            self._generar_balanceada(longitud_min + 2),
+            self._generar_paranoia(longitud_min + 4)
+        ]
+        
+        return {
+            "timestamp": datetime.now().isoformat(),
+            "sugerencias": sugerencias,
+            "recomendación": self._recomendar(preferidas),
+            "cómo_usar": [
+                "1. Elige una sugerencia según tus preferencias",
+                "2. Memoriza o guarda en gestor de contraseñas",
+                "3. NO la escribas en papel o notas",
+                "4. NO la compartas con nadie",
+                "5. Usa diferente para cada sitio importante"
+            ]
+        }
+    
+    def _generar_simple(self, length: int) -> Dict:
+        """Genera contraseña SIMPLE"""
+        
+        # Estrategia: Palabra memorable + número + símbolo
+        palabras = ["Dragon", "Phoenix", "Tiger", "Eagle", "Shadow"]
+        palabra = random.choice(palabras)
+        
+        numero = str(random.randint(1000, 9999))
+        simbolo = random.choice(self.symbols)
+        
+        password = f"{palabra}{numero}{simbolo}"
+        
+        return {
+            "tipo": "SIMPLE",
+            "contraseña": password,
+            "longitud": len(password),
+            "score_estimado": 70,
+            "ventajas": [
+                "Relativamente fácil de recordar",
+                "Palabra memorable + números + símbolo"
+            ],
+            "desventajas": [
+                "Basada en palabra (menos aleatoria)",
+                "Patrón predecible: palabra+número+símbolo"
+            ]
+        }
+    
+    def _generar_balanceada(self, length: int) -> Dict:
+        """Genera contraseña BALANCEADA"""
+        
+        # Estrategia: Aleatoria pero comprensible
+        chars = (
+            string.ascii_uppercase +
+            string.ascii_lowercase +
+            string.digits +
+            self.symbols
+        )
+        
+        password = ''.join(random.choice(chars) for _ in range(length))
+        
+        return {
+            "tipo": "BALANCEADA",
+            "contraseña": password,
+            "longitud": len(password),
+            "score_estimado": 90,
+            "ventajas": [
+                "Altamente aleatoria",
+                "Difícil de crackear",
+                "Longitud segura"
+            ],
+            "desventajas": [
+                "Difícil de recordar",
+                "DEBES usar gestor de contraseñas"
+            ]
+        }
+    
+    def _generar_paranoia(self, length: int) -> Dict:
+        """Genera contraseña PARANOIA (máxima seguridad)"""
+        
+        # Estrategia: Completamente aleatoria, muy larga
+        chars = (
+            string.ascii_uppercase +
+            string.ascii_lowercase +
+            string.digits +
+            self.symbols
+        )
+        
+        password = ''.join(random.choice(chars) for _ in range(length))
+        
+        return {
+            "tipo": "PARANOIA",
+            "contraseña": password,
+            "longitud": len(password),
+            "score_estimado": 99,
+            "ventajas": [
+                "Prácticamente imposible de crackear",
+                "Longitud máxima (24+ caracteres)",
+                "Aleatoriedad máxima"
+            ],
+            "desventajas": [
+                "Totalmente imposible de recordar",
+                "OBLIGATORIO usar gestor de contraseñas",
+                "Impráctica para sitios sin soporte"
+            ]
+        }
+    
+    def _recomendar(self, preferencia: str) -> str:
+        """Recomienda según preferencia del usuario"""
+        recomendaciones = {
+            "simple": "Para cuentas secundarias o no críticas",
+            "balanceada": "Recomendado para la mayoría (buen balance)",
+            "paranoia": "Para cuentas críticas (email, banco, trabajo)"
+        }
+        return recomendaciones.get(preferencia, "Elige según tus necesidades")
+ 
+ 
+# ============================================================================
+# AGENTE 5: APRENDIZ
+# ============================================================================
+ 
+class PasswordLearner:
+    """
+    Aprende del feedback del usuario
+    
+    Ejemplo:
+    Usuario dice: "Eso es demasiado complejo"
+    → Sistema aprende: próximas sugerencias serán SIMPLES
+    
+    Usuario dice: "Me gustó la segunda opción"
+    → Sistema aprende: usuario prefiere BALANCEADA
+    
+    Este es el sistema ADAPTATIVO del proyecto.
+    """
+    
+    def __init__(self, memory_dir: str = "./storage/user_memory"):
+        """Inicializa el aprendiz"""
+        self.memory_dir = memory_dir
+        os.makedirs(memory_dir, exist_ok=True)
+    
+    def process_feedback(self, user_id: str, feedback: str,
+                        contexto: Dict) -> Dict:
+        """
+        Procesa feedback y adapta preferencias
+        
+        Args:
+            user_id: ID único del usuario
+            feedback: Lo que dice ("Eso fue fácil", "Muy complejo", etc.)
+            contexto: Contexto (qué se sugirió, qué le gustó)
+            
+        Returns:
+            Confirmación de aprendizaje
+        """
+        
+        # Cargar preferencias actuales
+        prefs = self._load_preferences(user_id)
+        
+        # Extraer lecciones del feedback
+        lecciones = self._extract_lessons(feedback)
+        
+        # Actualizar preferencias
+        for leccion in lecciones:
+            if "simple" in leccion.lower():
+                prefs["complejidad"] = "simple"
+            elif "complejo" in leccion.lower() or "paranoia" in leccion.lower():
+                prefs["complejidad"] = "paranoia"
+            elif "balanceado" in leccion.lower() or "medio" in leccion.lower():
+                prefs["complejidad"] = "balanceada"
+            
+            if "largo" in leccion.lower():
+                prefs["longitud_minima"] = 16
+            elif "corto" in leccion.lower():
+                prefs["longitud_minima"] = 10
+        
+        # Guardar
+        self._save_preferences(user_id, prefs)
+        
+        return {
+            "status": "APRENDIDO",
+            "feedback_procesado": feedback,
+            "lecciones_extraidas": lecciones,
+            "nuevas_preferencias": prefs,
+            "mensaje": "Sistema adaptado. Próximas sugerencias serán diferentes.",
+            "próxima_sugerencia": f"Usará complejidad: {prefs.get('complejidad')}"
+        }
+    
+    def _extract_lessons(self, feedback: str) -> List[str]:
+        """Extrae lecciones del feedback"""
+        
+        keywords = {
+            "simple": ["fácil", "simple", "corto", "básico", "no muy complejo"],
+            "balanceada": ["bien", "perfecto", "medio", "balance"],
+            "paranoia": ["paranoia", "complejo", "fuerte", "muy fuerte", "seguro"],
+            "largo": ["largo", "más largo", "más caracteres"],
+            "corto": ["corto", "menos caracteres", "no tan largo"]
+        }
+        
+        feedback_lower = feedback.lower()
+        lecciones = []
+        
+        for leccion, palabras_clave in keywords.items():
+            for palabra in palabras_clave:
+                if palabra in feedback_lower:
+                    lecciones.append(leccion)
+                    break
+        
+        return lecciones if lecciones else ["feedback_recibido"]
+    
+    def _load_preferences(self, user_id: str) -> Dict:
+        """Carga preferencias del usuario"""
+        
+        filepath = os.path.join(self.memory_dir, f"{user_id}_prefs.json")
+        
+        if os.path.exists(filepath):
+            with open(filepath, 'r') as f:
+                return json.load(f)
+        
+        # Por defecto
+        return {
+            "user_id": user_id,
+            "complejidad": "balanceada",
+            "longitud_minima": 12,
+            "nivel_detalle": "simple"
+        }
+    
+    def _save_preferences(self, user_id: str, prefs: Dict) -> bool:
+        """Guarda preferencias"""
+        
+        filepath = os.path.join(self.memory_dir, f"{user_id}_prefs.json")
+        
+        with open(filepath, 'w') as f:
+            json.dump(prefs, f, indent=2)
+        
+        return True
+ 
+ 
+# ============================================================================
+# ORQUESTADOR: Coordina todo
+# ============================================================================
+ 
+class PasswordCrackerOrchestrator:
+    """
+    MAESTRO: Coordina todos los agentes
+    
+    Flujo:
+    1. Usuario proporciona contraseña
+    2. Analizador la evalúa
+    3. Atacante intenta crackearla
+    4. Educador explica resultados
+    5. Generador crea alternativas
+    6. Sistema recuerda feedback (Aprendiz)
+    
+    Con caché inteligente para no repetir trabajo.
+    """
+    
+    def __init__(self):
+        """Inicializa orquestador"""
+        from rompe_claves_1_analyzer import PasswordAnalyzer
+        from rompe_claves_2_attacker import PasswordAttacker
+        
+        self.analyzer = PasswordAnalyzer()
+        self.attacker = PasswordAttacker()
+        self.educator = PasswordEducator()
+        self.generator = PasswordGenerator()
+        self.learner = PasswordLearner()
+        
+        self.cache = {}
+        self.token_count = 0
+    
+    def execute_pipeline(self, password: str, 
+                        user_id: str = "anonimo",
+                        methods: List[str] = None) -> Dict:
+        """
+        Ejecuta pipeline completo
+        
+        Args:
+            password: Contraseña a analizar
+            user_id: ID del usuario (para recordar preferencias)
+            methods: Métodos de ataque a probar
+            
+        Returns:
+            Resultado completo
+        """
+        
+        if methods is None:
+            methods = ["diccionario"]
+        
+        # Cargar preferencias del usuario
+        user_prefs = self.learner._load_preferences(user_id)
+        
+        # PASO 1: Analizar
+        print("  [1/4] Analizando contraseña...")
+        analisis = self.analyzer.analyze(password)
+        self.token_count += 250
+        
+        # PASO 2: Atacar
+        print("  [2/4] Intentando ataque...")
+        ataques = {}
+        for metodo in methods:
+            ataques[metodo] = self.attacker.attack(password, metodo)
+            self.token_count += 150
+        
+        # PASO 3: Educar
+        print("  [3/4] Generando lecciones...")
+        educacion = self.educator.educate(analisis, ataques[methods[0]], user_prefs)
+        self.token_count += 100
+        
+        # PASO 4: Generar alternativas
+        print("  [4/4] Generando sugerencias...")
+        sugerencias = self.generator.generate(password, user_prefs)
+        self.token_count += 100
+        
+        return {
+            "timestamp": datetime.now().isoformat(),
+            "usuario_id": user_id,
+            
+            # Resultado del pipeline
+            "analisis": analisis,
+            "ataques": ataques,
+            "educacion": educacion,
+            "sugerencias": sugerencias,
+            
+            # Metadata
+            "tokens_usados": self.token_count,
+            "preferencias_usuario": user_prefs
+        }
+    
+    def process_feedback(self, user_id: str, feedback: str) -> Dict:
+        """Procesa feedback y adapta sistema"""
+        
+        print(f"\n[APRENDIZAJE] Procesando feedback...")
+        
+        resultado = self.learner.process_feedback(
+            user_id,
+            feedback,
+            contexto={}
+        )
+        
+        self.token_count += 50
+        
+        return resultado
+ 
+ 
+# ============================================================================
+# EJEMPLO DE USO COMPLETO
+# ============================================================================
+ 
+if __name__ == "__main__":
+    print("\n" + "="*70)
+    print("🔐 SISTEMA COMPLETO: ROMPE CLAVES")
+    print("="*70)
+    
+    # Crear orquestador
+    orchestrator = PasswordCrackerOrchestrator()
+    
+    # Ejemplo 1: Análisis completo
+    print("\n[EJEMPLO 1] Análisis de contraseña débil")
+    print("-" * 70)
+    
+    resultado = orchestrator.execute_pipeline(
+        password="diego2024",
+        user_id="diego_2026_0048",
+        methods=["diccionario"]
+    )
+    
+    print(f"\nResultado:")
+    print(f"  Score: {resultado['analisis']['score']}/100")
+    print(f"  Fortaleza: {resultado['analisis']['fortaleza']}")
+    print(f"  Se crackea: {resultado['ataques']['diccionario']['se_crackea']}")
+    print(f"  Problema: {resultado['analisis']['problemas'][0]}")
+    print(f"  Recomendación: {resultado['educacion']['resumen_ejecutivo']}")
+    
+    # Ejemplo 2: Feedback y aprendizaje
+    print("\n[EJEMPLO 2] Usuario da feedback")
+    print("-" * 70)
+    
+    feedback_result = orchestrator.process_feedback(
+        "diego_2026_0048",
+        "Eso es demasiado complejo, quiero algo más simple"
+    )
+    
+    print(f"\nSistema aprendió:")
+    print(f"  Nueva complejidad: {feedback_result['nuevas_preferencias']['complejidad']}")
+    print(f"  Próxima sugerencia: {feedback_result['próxima_sugerencia']}")
+    
+    # Ejemplo 3: Segunda ejecución (sistema ya adaptado)
+    print("\n[EJEMPLO 3] Segunda ejecución (sistema adaptado)")
+    print("-" * 70)
+    
+    resultado2 = orchestrator.execute_pipeline(
+        password="maria1999",
+        user_id="diego_2026_0048"
+    )
+    
+    print(f"\nObserva:")
+    print(f"  Sugerencia tipo recomendado: {resultado2['sugerencias']['recomendación']}")
+    print(f"  Preferencia guardada: {resultado2['preferencias_usuario']['complejidad']}")
+    
+    # Reporte final
+    print("\n" + "="*70)
+    print(f"📊 Tokens usados en todo: {orchestrator.token_count}")
+    print("="*70)
+    
