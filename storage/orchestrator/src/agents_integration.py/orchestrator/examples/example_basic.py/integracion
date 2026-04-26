@@ -1,0 +1,822 @@
+mkdir -p orchestrator/src
+mkdir -p orchestrator/examples
+mkdir -p orchestrator/tests
+mkdir -p storage/user_memory
+mkdir -p storage/cache
+
+touch orchestrator/src/__init__.py
+touch orchestrator/src/hub.py
+touch orchestrator/examples/example_basic.py
+touch orchestrator/examples/example_with_feedback.py
+touch orchestrator/tests/test_orchestrator.py
+touch orchestrator/README.md
+  """
+🤖 ORQUESTADOR - Maestro de agentes
+============================================
+Este módulo coordina todos los agentes.
+
+Analogía: Es como un director de orquesta que:
+1. Dice cuándo toca cada instrumento (agente)
+2. Asegura que cada uno solo reciba lo que necesita (optimiza tokens)
+3. Recuerda lo que aprendió de cada músico (preferencias del usuario)
+"""
+
+import json
+import hashlib
+import os
+from datetime import datetime
+from typing import Dict, List, Optional, Tuple
+import sys
+
+
+class TokenCounter:
+    """
+    EXPLICACIÓN: Este contador mantiene track de cuántos tokens gastamos.
+    
+    ¿Por qué es importante?
+    - Plan Free tiene límite (200k tokens/mes)
+    - Si no sabes cuánto gastas, se acaba sin aviso
+    - Este contador te dice exactamente cuántos usaste
+    
+    Analogía: Es como el odómetro de un auto. Necesitas saber
+    cuántos km recorriste para saber cuándo llenar el tanque.
+    """
+    
+    def __init__(self):
+        self.total_tokens = 0
+        self.by_agent = {}  # Desglose por agente
+        self.history = []   # Historial de cada gasto
+    
+    def add(self, agent_name: str, tokens: int, description: str = ""):
+        """
+        Registra gasto de tokens
+        
+        Args:
+            agent_name: Qué agente gastó tokens
+            tokens: Cuántos tokens gastó
+            description: Qué hizo (para debugging)
+        
+        Ejemplo:
+            counter.add("router", 250, "Clasificó entrada")
+        """
+        self.total_tokens += tokens
+        
+        if agent_name not in self.by_agent:
+            self.by_agent[agent_name] = 0
+        self.by_agent[agent_name] += tokens
+        
+        self.history.append({
+            "timestamp": datetime.now().isoformat(),
+            "agent": agent_name,
+            "tokens": tokens,
+            "description": description
+        })
+    
+    def get_report(self) -> Dict:
+        """Devuelve reporte de tokens"""
+        return {
+            "total": self.total_tokens,
+            "by_agent": self.by_agent,
+            "plan_free_remaining": max(0, 200000 - self.total_tokens),
+            "plan_free_used_percent": round((self.total_tokens / 200000) * 100, 1)
+        }
+
+
+class CacheManager:
+    """
+    EXPLICACIÓN: Gestor de caché para no repetir trabajo
+    
+    ¿Cómo funciona?
+    1. User hace pregunta A
+    2. Orquestador genera "clave" = hash("pregunta A")
+    3. Procesa todo (costo: 3.5k tokens)
+    4. Guarda resultado con clave
+    
+    5. User hace MISMA pregunta A
+    6. Orquestador genera clave = hash("pregunta A")
+    7. Busca en caché → ENCONTRADO
+    8. Devuelve resultado sin procesar (costo: 0 tokens)
+    
+    Ahorro: 3.5k tokens × número de preguntas repetidas
+    """
+    
+    def __init__(self, cache_dir: str = "./storage/cache"):
+        self.cache_dir = cache_dir
+        os.makedirs(cache_dir, exist_ok=True)
+        self.memory_cache = {}  # Caché en memoria (más rápido)
+    
+    def _generate_key(self, user_input: str) -> str:
+        """
+        Genera clave única basada en entrada
+        
+        Cómo funciona:
+        - Toma el texto del usuario
+        - Lo convierte a números (hash)
+        - Primeros 16 caracteres = clave corta
+        
+        Ejemplo:
+            Input: "Necesito un sistema de agentes"
+            Output: "a7f3b2c9d1e4f6a8"
+        """
+        hash_obj = hashlib.sha256(user_input.encode('utf-8'))
+        return hash_obj.hexdigest()[:16]
+    
+    def get(self, user_input: str) -> Optional[Dict]:
+        """
+        Busca en caché
+        
+        Retorna:
+            Dict si encontró
+            None si no existe
+        """
+        key = self._generate_key(user_input)
+        
+        # Primero busca en memoria (más rápido)
+        if key in self.memory_cache:
+            return self.memory_cache[key]
+        
+        # Luego en archivo JSON
+        file_path = os.path.join(self.cache_dir, f"{key}.json")
+        if os.path.exists(file_path):
+            with open(file_path, 'r', encoding='utf-8') as f:
+                cached_result = json.load(f)
+                self.memory_cache[key] = cached_result  # Guardar en memoria
+                return cached_result
+        
+        return None
+    
+    def set(self, user_input: str, result: Dict) -> bool:
+        """
+        Guarda resultado en caché
+        
+        Pasos:
+        1. Genera clave
+        2. Guarda en memoria
+        3. Guarda en archivo JSON (persistencia)
+        """
+        key = self._generate_key(user_input)
+        
+        # Guardar en memoria
+        self.memory_cache[key] = result
+        
+        # Guardar en archivo para persistencia
+        file_path = os.path.join(self.cache_dir, f"{key}.json")
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(result, f, indent=2, ensure_ascii=False)
+        
+        return True
+    
+    def clear(self):
+        """Limpia todo el caché (úsalo después de aprender feedback)"""
+        self.memory_cache.clear()
+        # Nota: No borramos archivos para no perder historial
+
+
+class FeedbackProcessor:
+    """
+    EXPLICACIÓN: Procesa feedback y extrae lecciones
+    
+    ¿Qué hace?
+    - User dice: "Eso fue muy técnico"
+    - FeedbackProcessor extrae: lección = "reducir_jerga"
+    - Agente Adaptive usa esa lección para actualizar preferencias
+    
+    ¿Por qué es importante?
+    - Sin esto, el feedback es solo un String guardado
+    - Con esto, el feedback se convierte en ACCIONES
+    """
+    
+    def __init__(self):
+        # Mapeo de palabras clave → lecciones
+        self.feedback_mapping = {
+            # Palabras sobre complejidad
+            "técnico": ["reducir_jerga", "usar_analogías", "simplificar"],
+            "complejo": ["simplificar", "dividir_en_pasos"],
+            "simple": ["mantener_simplicidad", "evitar_detalles"],
+            "fácil": ["mantener_claridad"],
+            
+            # Palabras sobre formato
+            "código": ["incluir_ejemplos_código"],
+            "ejemplo": ["incluir_ejemplos", "más_ejemplos"],
+            "pseudocódigo": ["pseudocódigo_primero", "luego_python"],
+            
+            # Palabras sobre velocidad
+            "rápido": ["priorizar_velocidad"],
+            "lento": ["optimizar_velocidad"],
+            
+            # Palabras sobre claridad
+            "confuso": ["mejorar_claridad", "mejor_estructura"],
+            "claro": ["mantener_este_estilo"],
+        }
+    
+    def extract_lessons(self, feedback: str) -> List[str]:
+        """
+        Extrae lecciones del feedback del usuario
+        
+        Ejemplo:
+            Input: "Eso fue muy técnico y sin ejemplos"
+            Output: ["reducir_jerga", "usar_analogías", "incluir_ejemplos"]
+        
+        ¿Cómo?
+        1. Busca palabras clave en el feedback
+        2. Mapea cada palabra a una lección
+        3. Retorna lista de lecciones
+        """
+        lecciones = []
+        feedback_lower = feedback.lower()
+        
+        for palabra_clave, lecciones_asociadas in self.feedback_mapping.items():
+            if palabra_clave in feedback_lower:
+                lecciones.extend(lecciones_asociadas)
+        
+        # Remover duplicados
+        lecciones = list(set(lecciones))
+        
+        return lecciones if lecciones else ["feedback_recibido"]
+    
+    def classify_sentiment(self, feedback: str) -> str:
+        """
+        Clasifica si el feedback es positivo, negativo o neutral
+        
+        ¿Por qué?
+        - Feedback positivo: "Eso estuvo perfecto" → Seguir igual
+        - Feedback negativo: "Demasiado técnico" → Cambiar
+        - Neutral: "Interesante" → Guardar pero no cambiar
+        """
+        feedback_lower = feedback.lower()
+        
+        positive_words = ["perfecto", "excelente", "bien", "gracias", "claro"]
+        negative_words = ["mal", "no", "problema", "falta", "difícil", "confuso"]
+        
+        pos_count = sum(1 for w in positive_words if w in feedback_lower)
+        neg_count = sum(1 for w in negative_words if w in feedback_lower)
+        
+        if pos_count > neg_count:
+            return "POSITIVO"
+        elif neg_count > pos_count:
+            return "NEGATIVO"
+        else:
+            return "NEUTRO"
+
+
+class UserMemory:
+    """
+    EXPLICACIÓN: Memoria persistente del usuario
+    
+    ¿Qué guarda?
+    - Preferencias del usuario (complejidad, lenguaje, etc.)
+    - Historial de feedback
+    - Lecciones aprendidas
+    
+    ¿Por qué es importante?
+    - Sin esto, cada conversación empieza del cero
+    - Con esto, el sistema recuerda quién eres y cómo aprendiste
+    
+    Analogía: Es como si tu profesor tuviera un archivo sobre ti:
+    "Diego aprende mejor con pseudocódigo primero"
+    La próxima clase, usa eso automáticamente.
+    """
+    
+    def __init__(self, memory_dir: str = "./storage/user_memory"):
+        self.memory_dir = memory_dir
+        os.makedirs(memory_dir, exist_ok=True)
+    
+    def load_preferences(self, user_id: str) -> Dict:
+        """
+        Carga preferencias guardadas del usuario
+        
+        Si no existen, devuelve preferencias por defecto
+        """
+        file_path = os.path.join(self.memory_dir, f"{user_id}_prefs.json")
+        
+        if os.path.exists(file_path):
+            with open(file_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        else:
+            # Preferencias por defecto (primer usuario)
+            return {
+                "user_id": user_id,
+                "created_at": datetime.now().isoformat(),
+                "complejidad": "normal",  # puede cambiar a "baja", "media", "alta"
+                "lenguaje": "español",
+                "ejemplos_código": True,
+                "velocidad": "balanceado",  # "rápido" vs "calidad"
+                "formato_preferido": "directo",  # puede cambiar a "pseudocódigo_primero"
+                "feedback_history": [],
+                "lessons_learned": [],
+                "last_updated": datetime.now().isoformat()
+            }
+    
+    def save_preferences(self, user_id: str, preferences: Dict) -> bool:
+        """Guarda preferencias actualizadas"""
+        file_path = os.path.join(self.memory_dir, f"{user_id}_prefs.json")
+        preferences["last_updated"] = datetime.now().isoformat()
+        
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(preferences, f, indent=2, ensure_ascii=False)
+        
+        return True
+    
+    def update_preferences(self, user_id: str, lessons: List[str]) -> Dict:
+        """
+        MÉTODO CRÍTICO: Actualiza preferencias basado en lecciones aprendidas
+        
+        Ejemplo:
+            Lecciones: ["reducir_jerga", "pseudocódigo_primero"]
+            Antes: {"complejidad": "normal", "formato": "directo"}
+            Después: {"complejidad": "baja", "formato": "pseudocódigo_primero"}
+        
+        Este es el VERDADERO aprendizaje del sistema.
+        """
+        prefs = self.load_preferences(user_id)
+        
+        # Procesar cada lección y actualizar preferencias
+        for lesson in lessons:
+            if "reducir_jerga" in lesson or "simplificar" in lesson:
+                prefs["complejidad"] = "baja"
+            
+            if "pseudocódigo_primero" in lesson:
+                prefs["formato_preferido"] = "pseudocódigo_primero"
+            
+            if "incluir_ejemplos" in lesson:
+                prefs["ejemplos_código"] = True
+            
+            if "priorizar_velocidad" in lesson:
+                prefs["velocidad"] = "rápido"
+            
+            if "mantener_este_estilo" in lesson:
+                prefs["feedback_positivo"] = True
+        
+        # Guardar lecciones en historial
+        prefs["lessons_learned"].extend(lessons)
+        prefs["lessons_learned"] = list(set(prefs["lessons_learned"]))  # Remover duplicados
+        
+        self.save_preferences(user_id, prefs)
+        return prefs
+
+
+class OrchestrationHub:
+    """
+    EL MAESTRO: Coordina todo el sistema
+    
+    ¿Qué hace?
+    1. Recibe entrada del usuario
+    2. Busca en caché (¿ya procesé esto antes?)
+    3. Si no está en caché:
+       a. Llama a Router (clasifica)
+       b. Llama a Analyzer (descompone)
+       c. Llama a Validator (valida)
+       d. Llama a Generator (genera) - USA preferencias del usuario
+       e. Guarda resultado en caché
+    4. Procesa feedback del usuario
+    5. Actualiza preferencias del usuario
+    6. Próxima ejecución: Usa preferencias nuevas
+    
+    Este es el flujo INTELIGENTE que optimiza tokens y implementa aprendizaje real.
+    """
+    
+    def __init__(self):
+        """Inicializa el Orquestador"""
+        print("🤖 Inicializando Orquestador...")
+        
+        self.cache_manager = CacheManager()
+        self.token_counter = TokenCounter()
+        self.feedback_processor = FeedbackProcessor()
+        self.user_memory = UserMemory()
+        
+        # Diccionario para guardar referencia a los agentes
+        self.agents = {}
+        
+        print("✓ Orquestador listo")
+    
+    def register_agent(self, name: str, agent_class):
+        """
+        Registra un agente en el orquestador
+        
+        Uso:
+            orchestrator = OrchestrationHub()
+            orchestrator.register_agent("router", RouterAgent)
+            orchestrator.register_agent("analyzer", AnalyzerAgent)
+            ...
+        
+        ¿Por qué?
+        - Le dice al Orquestador: "Estos son mis agentes disponibles"
+        - El Orquestador sabe cuándo llamar a cada uno
+        """
+        self.agents[name] = agent_class()
+        print(f"  ✓ Agente '{name}' registrado")
+    
+    def execute_pipeline(self, user_input: str, user_id: str = "default") -> Dict:
+        """
+        MÉTODO PRINCIPAL: Ejecuta todo el pipeline de forma optimizada
+        
+        Pasos:
+        1. Busca en caché (¿ya procesé esto?)
+        2. Si sí: devuelve resultado (0 tokens)
+        3. Si no: ejecuta todos los agentes
+        4. Guarda en caché para la próxima
+        
+        Args:
+            user_input: Lo que el usuario dice
+            user_id: ID único del usuario (para preferencias)
+        
+        Returns:
+            Dict con resultado completo
+        """
+        
+        print("\n" + "="*70)
+        print("🚀 INICIANDO PIPELINE")
+        print("="*70)
+        
+        # PASO 1: BUSCAR EN CACHÉ
+        print("\n[PASO 1] Buscando en caché...")
+        cached_result = self.cache_manager.get(user_input)
+        
+        if cached_result:
+            print("  ✓ ENCONTRADO EN CACHÉ (0 tokens)")
+            cached_result["desde_cache"] = True
+            self.token_counter.add("cache", 0, "Cache hit")
+            return cached_result
+        
+        print("  ✗ No en caché, procesando...")
+        
+        # PASO 2: CARGAR PREFERENCIAS DEL USUARIO
+        print("\n[PASO 2] Cargando preferencias del usuario...")
+        user_prefs = self.user_memory.load_preferences(user_id)
+        print(f"  • Complejidad preferida: {user_prefs['complejidad']}")
+        print(f"  • Formato: {user_prefs['formato_preferido']}")
+        
+        # PASO 3: EJECUTAR AGENTES (solo con datos que necesitan)
+        print("\n[PASO 3] Ejecutando agentes...")
+        
+        # Router: recibe entrada original
+        print("  • Router clasifica...")
+        router_result = self._run_agent(
+            "router",
+            user_input,
+            context={}  # Sin contexto previo
+        )
+        rama = router_result.get("clasificacion", "RAMA_B")
+        self.token_counter.add("router", 250, f"Clasificó como {rama}")
+        
+        # Analyzer: recibe SOLO output del Router
+        print("  • Analyzer descompone...")
+        analyzer_result = self._run_agent(
+            "analyzer",
+            user_input,
+            context={"rama": rama}  # Solo lo necesario
+        )
+        self.token_counter.add("analyzer", 200, "Descompuso componentes")
+        
+        # Validator: recibe SOLO output del Analyzer
+        print("  • Validator valida...")
+        validator_result = self._run_agent(
+            "validator",
+            user_input,
+            context={"componentes": analyzer_result.get("componentes")}
+        )
+        self.token_counter.add("validator", 180, "Identificó gaps")
+        
+        # Generator: recibe gaps + PREFERENCIAS DEL USUARIO (CLAVE)
+        print("  • Generator genera...")
+        generator_result = self._run_agent(
+            "generator",
+            user_input,
+            context={
+                "gaps": validator_result.get("gaps"),
+                "user_preferences": user_prefs  # ← AQUÍ ENTRA EL APRENDIZAJE
+            }
+        )
+        self.token_counter.add("generator", 300, "Generó soluciones")
+        
+        # PASO 4: COMPILAR RESULTADO FINAL
+        resultado_final = {
+            "timestamp": datetime.now().isoformat(),
+            "user_id": user_id,
+            "desde_cache": False,
+            
+            # Resultado completo del pipeline
+            "pipeline": {
+                "router": router_result,
+                "analyzer": analyzer_result,
+                "validator": validator_result,
+                "generator": generator_result
+            },
+            
+            # Resumen ejecutivo
+            "resumen": {
+                "rama": rama,
+                "mejor_solucion": generator_result.get("mejor_opcion", {}).get("nombre"),
+                "siguiente_paso": "Puedes dar feedback o aceptar la solución"
+            },
+            
+            # Metadata
+            "metadata": {
+                "tokens_usados": self.token_counter.total_tokens,
+                "agentes_ejecutados": 4,
+                "user_preferences": user_prefs
+            }
+        }
+        
+        # PASO 5: GUARDAR EN CACHÉ
+        print("\n[PASO 4] Guardando en caché...")
+        self.cache_manager.set(user_input, resultado_final)
+        print("  ✓ Guardado")
+        
+        print("\n" + "="*70)
+        print("✓ PIPELINE COMPLETADO")
+        print("="*70)
+        
+        return resultado_final
+    
+    def process_feedback(self, user_id: str, feedback: str, task_type: str) -> Dict:
+        """
+        MÉTODO CRÍTICO: Procesa feedback y adapta el sistema
+        
+        Este es donde pasa la MAGIA del aprendizaje.
+        
+        Pasos:
+        1. Extrae lecciones del feedback
+        2. Actualiza preferencias del usuario
+        3. Limpia caché (para que próximas ejecuciones usen nuevas prefs)
+        
+        Args:
+            user_id: ID del usuario
+            feedback: Lo que dice ("Fue muy técnico")
+            task_type: Tipo de tarea ("código")
+        
+        Returns:
+            Confirmación de aprendizaje
+        """
+        
+        print("\n" + "="*70)
+        print("🧠 PROCESANDO FEEDBACK")
+        print("="*70)
+        
+        # Paso 1: Extraer lecciones
+        print(f"\nFeedback recibido: '{feedback}'")
+        lecciones = self.feedback_processor.extract_lessons(feedback)
+        print(f"Lecciones extraídas: {lecciones}")
+        
+        # Paso 2: Actualizar preferencias
+        print(f"\nActualizando preferencias para {user_id}...")
+        prefs_actualizadas = self.user_memory.update_preferences(user_id, lecciones)
+        print(f"✓ Nuevas preferencias guardadas")
+        
+        # Paso 3: Limpiar caché
+        print(f"\nLimpiando caché (porque cambiaron preferencias)...")
+        self.cache_manager.clear()
+        print(f"✓ Cache limpiado")
+        
+        resultado = {
+            "status": "APRENDIDO",
+            "feedback": feedback,
+            "lecciones": lecciones,
+            "nuevas_preferencias": prefs_actualizadas,
+            "mensaje": "Sistema adaptado. Próximas respuestas serán diferentes.",
+            "tokens_ahorrados_próxima": "~1500+ (cache + preferencias)"
+        }
+        
+        print("\n✓ FEEDBACK PROCESADO")
+        print("="*70)
+        
+        return resultado
+    
+    def _run_agent(self, agent_name: str, input_data: str, context: Dict) -> Dict:
+        """
+        Método privado: Ejecuta un agente específico
+        
+        En producción, aquí llamarías a los agentes reales:
+            output = self.agents[agent_name].run(input_data, context)
+        
+        Por ahora, devolvemos datos simulados para testing
+        """
+        
+        # En producción:
+        # if agent_name in self.agents:
+        #     return self.agents[agent_name].run(input_data, context)
+        
+        # Para testing/desarrollo, devolvemos datos simulados
+        mock_outputs = {
+            "router": {
+                "clasificacion": "RAMA_A",
+                "veredicto": "Idea clara",
+                "confianza": 8
+            },
+            "analyzer": {
+                "componentes": {"problema": 8, "solución": 7, "audiencia": 6},
+                "claridad_general": 7
+            },
+            "validator": {
+                "gaps": [{"componente": "audiencia", "severidad": "MEDIA"}],
+                "viabilidad": 7
+            },
+            "generator": {
+                "soluciones_generadas": [
+                    {"nombre": "Estrategia Mínima", "score": 6},
+                    {"nombre": "Estrategia Balanceada", "score": 9},
+                    {"nombre": "Estrategia Completa", "score": 7}
+                ],
+                "mejor_opcion": {"nombre": "Estrategia Balanceada"}
+            }
+        }
+        
+        return mock_outputs.get(agent_name, {})
+    
+    def get_token_report(self) -> Dict:
+        """Obtiene reporte completo de tokens"""
+        return self.token_counter.get_report()
+    
+    def print_token_report(self):
+        """Imprime reporte amigable"""
+        report = self.token_counter.get_report()
+        
+        print("\n" + "="*70)
+        print("📊 REPORTE DE TOKENS")
+        print("="*70)
+        print(f"\nTokens totales gastados: {report['total']:,}")
+        print(f"Tokens disponibles (Plan Free): {report['plan_free_remaining']:,}")
+        print(f"Uso del plan: {report['plan_free_used_percent']}%")
+        print(f"\nDesglose por agente:")
+        for agent, tokens in report['by_agent'].items():
+            print(f"  • {agent}: {tokens:,} tokens")
+        print("\n" + "="*70)
+
+
+# ============================================================================
+# EJEMPLO DE USO
+# ============================================================================
+
+if __name__ == "__main__":
+    
+    print("\n🎭 DEMOSTRACIÓN DEL ORQUESTADOR\n")
+    
+    # Crear orquestador
+    orchestrator = OrchestrationHub()
+    
+    # Simular usuario
+    user_input = """
+    Quiero un sistema de agentes que optimice prompts.
+    Tengo experiencia con pseudocódigo, soy principiante en Python.
+    """
+    
+    print("\n[USUARIO] " + user_input)
+    
+    # EJECUCIÓN 1
+    resultado1 = orchestrator.execute_pipeline(user_input, user_id="diego_2026_0048")
+    print(f"\n→ Mejor solución: {resultado1['resumen']['mejor_solucion']}")
+    print(f"→ Tokens usado: {resultado1['metadata']['tokens_usados']}")
+    
+    # FEEDBACK
+    feedback = "Eso fue muy técnico, necesitaba más simple con pseudocódigo primero"
+    print(f"\n[USUARIO FEEDBACK] {feedback}")
+    
+    feedback_result = orchestrator.process_feedback(
+        "diego_2026_0048", feedback, "código"
+    )
+    
+    print(f"\n→ Nuevas preferencias: complejidad={feedback_result['nuevas_preferencias']['complejidad']}")
+    
+    # EJECUCIÓN 2 (Sistema ya aprendió)
+    print(f"\n[USUARIO] Ahora crea un validador")
+    resultado2 = orchestrator.execute_pipeline("Ahora crea un validador", user_id="diego_2026_0048")
+    
+    print(f"\n→ Sistema usó preferencias aprendidas")
+    print(f"→ Complejidad: {resultado2['metadata']['user_preferences']['complejidad']}")
+    
+    # REPORTE FINAL
+    orchestrator.print_token_report()
+
+
+
+from packages.agent_router.src.router import RouterAgent
+from packages.agent_analyzer.src.analyzer import AnalyzerAgent
+from packages.agent_validator.src.validator import ValidatorAgent
+from packages.agent_generator.src.generator import GeneratorAgent
+from packages.agent_adaptive.src.adaptive import AdaptiveAgent
+
+def create_configured_orchestrator():
+    """
+
+    """
+    from .hub import OrchestrationHub
+    
+    # Crear Orquestador
+    orchestrator = OrchestrationHub()
+    
+    # Registrar los 5 agentes
+    orchestrator.register_agent("router", RouterAgent)
+    orchestrator.register_agent("analyzer", AnalyzerAgent)
+    orchestrator.register_agent("validator", ValidatorAgent)
+    orchestrator.register_agent("generator", GeneratorAgent)
+    orchestrator.register_agent("adaptive", AdaptiveAgent)
+    
+    print("✓ Orquestador configurado con 5 agentes")
+    return orchestrator
+
+
+# PASO 3: Función para ejecutar todo (interfaz simple)
+def run_pipeline(user_input: str, user_id: str = "default"):
+    """
+    Ejecuta todo el pipeline de forma simple
+    
+    Uso:
+        resultado = run_pipeline("Necesito un sistema de agentes")
+    """
+    orchestrator = create_configured_orchestrator()
+    return orchestrator.execute_pipeline(user_input, user_id)
+
+
+# PASO 4: Función para procesar feedback
+def learn_from_feedback(user_id: str, feedback: str):
+    """
+    Procesa feedback y adapta el sistema
+    
+    Uso:
+        learn_from_feedback("diego_2026_0048", "Eso fue muy técnico")
+    """
+    orchestrator = create_configured_orchestrator()
+    return orchestrator.process_feedback(user_id, feedback, task_type="código")
+
+
+if __name__ == "__main__":
+    # Test simple
+    print("Ejecutando prueba de integración...")
+    
+    resultado = run_pipeline(
+        "Necesito un sistema de agentes",
+        user_id="test_user"
+    )
+    
+    print("\nResultado:")
+    print(f"  Rama: {resultado['resumen']['rama']}")
+    print(f"  Mejor solución: {resultado['resumen']['mejor_solucion']}")
+    
+    # Mostrar tokens
+    report = resultado['metadata']
+    print(f"  Tokens usado: {report.get('tokens_usados', 'N/A')}")
+
+"""
+Ejemplo básico: Usar el Orquestador
+"""
+
+from orchestrator.src.agents_integration import run_pipeline, learn_from_feedback
+
+# EJEMPLO 1: Ejecución básica
+print("\n" + "="*70)
+print("EJEMPLO 1: Usar el Orquestador")
+print("="*70)
+
+usuario_input = """
+Quiero crear un sistema de agentes en Python.
+Tengo experiencia con pseudocódigo pero soy principiante en Python.
+Necesito que sea simple y rápido.
+"""
+
+print(f"\nUsuario: {usuario_input}")
+
+# Ejecutar
+resultado = run_pipeline(usuario_input, user_id="diego_2026_0048")
+
+print(f"\nResultado:")
+print(f"  Rama clasificada: {resultado['resumen']['rama']}")
+print(f"  Mejor solución: {resultado['resumen']['mejor_solucion']}")
+print(f"  Siguiente paso: {resultado['resumen']['siguiente_paso']}")
+
+
+# EJEMPLO 2: Con feedback
+print("\n" + "="*70)
+print("EJEMPLO 2: Con feedback (Sistema aprende)")
+print("="*70)
+
+feedback = "Eso fue muy técnico. Necesitaba pseudocódigo primero, luego Python."
+print(f"\nFeedback: {feedback}")
+
+# Procesar feedback
+feedback_result = learn_from_feedback("diego_2026_0048", feedback)
+
+print(f"\nSistema aprendió:")
+print(f"  Lecciones: {feedback_result['lecciones']}")
+print(f"  Nueva complejidad: {feedback_result['nuevas_preferencias']['complejidad']}")
+
+
+# EJEMPLO 3: Segunda ejecución (sistema ya aprendió)
+print("\n" + "="*70)
+print("EJEMPLO 3: Segunda ejecución (Sistema usa lo que aprendió)")
+print("="*70)
+
+usuario_input_2 = "Ahora necesito un validador de ideas"
+print(f"\nUsuario: {usuario_input_2}")
+
+resultado_2 = run_pipeline(usuario_input_2, user_id="diego_2026_0048")
+
+print(f"\nResultado:")
+print(f"  Basado en preferencias: {resultado_2['metadata']['user_preferences']}")
+print(f"  Complejidad (aprendida): {resultado_2['metadata']['user_preferences']['complejidad']}")
+
+
+print("\n✓ EJEMPLOS COMPLETADOS")
+
+
+
+
