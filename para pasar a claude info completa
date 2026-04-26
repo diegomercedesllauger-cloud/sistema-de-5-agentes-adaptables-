@@ -1,0 +1,1300 @@
+
+
+touch README.md
+touch SYSTEM.md
+touch packages/agent-router/README.md
+touch packages/agent-router/src/router.py
+touch packages/agent-router/examples/example_router.py
+
+🤖 SISTEMA DE 5 AGENTES MULTIAGENTE COMPLEJOS
+Autor: Diego Mercedes Llauger (2026-0048)
+Carrera: Ingeniería en Ciberseguridad | Universidad Dominicano Americana
+Fecha: Abril 2026
+Versión: 1.0 (Desarrollo)
+
+📋 TABLA DE CONTENIDOS
+
+Conceptos fundamentales
+Arquitectura del sistema
+Agente 1: Router (Clasificador)
+Agente 2: Analyzer (Descompositor)
+Agente 3: Validator (Verificador)
+Agente 4: Generator (Creador)
+Agente 5: Adaptive (Que aprende)
+Sistema de memoria (Persistencia)
+Integración en GitHub
+Contador de tokens
+
+
+🎓 CONCEPTOS FUNDAMENTALES {#conceptos}
+¿Qué es un agente?
+Un agente es un programa que:
+
+Recibe información (entrada)
+Toma decisiones basadas en reglas
+Ejecuta acciones (salida)
+Aprende de la retroalimentación (mejora)
+
+Analogía cotidiana: Un mesero en un restaurante.
+Entrada:  Cliente dice "quiero comida italiana"
+Decisión: El mesero piensa "¿qué platos italianos tenemos?"
+Acción:   Ofrece menú de opciones italianas
+Aprende:  Si el cliente dice "muy salado", la próxima vez
+          recomendará platos menos salados
+¿Por qué 5 agentes y no 1?
+Porque cada uno es especialista:
+AgenteEspecialidadEjemploRouterClasificar dónde estás"¿Tienes idea clara o vaga?"AnalyzerDescomponer problemas"¿Qué componentes tiene tu idea?"ValidatorEncontrar problemas"¿Qué puede fallar?"GeneratorCrear soluciones"¿Cuál es la mejor forma de hacerlo?"AdaptiveAprender de ti"La próxima vez usaré esto que aprendí"
+Es como un equipo de médicos:
+
+Doctor 1: Recepcionista (clasifica síntomas)
+Doctor 2: Internista (analiza)
+Doctor 3: Especialista (valida diagnóstico)
+Doctor 4: Cirujano (operación/solución)
+Doctor 5: Registros médicos (aprende de tus historiales)
+
+
+🏗️ ARQUITECTURA DEL SISTEMA {#arquitectura}
+┌─────────────────────────────────────────┐
+│  INPUT: Usuario describe algo           │
+└────────────────┬────────────────────────┘
+                 │
+         ┌───────▼────────┐
+         │  AGENTE 1:     │
+         │  ROUTER        │
+         │  Clasifica     │
+         └───────┬────────┘
+                 │
+        ┌────────┴─────────┐
+        │                  │
+   ┌────▼─────┐      ┌─────▼─────┐
+   │ RAMA A   │      │ RAMA B    │
+   │ Idea     │      │ Tema      │
+   │ clara    │      │ vago      │
+   └────┬─────┘      └─────┬─────┘
+        │                  │
+   ┌────▼──────────────────▼────┐
+   │ AGENTE 2: ANALYZER          │
+   │ Descompone en componentes   │
+   └────┬──────────────────────┬─┘
+        │                      │
+   ┌────▼────────┐      ┌──────▼──────┐
+   │ Componente 1│      │ Componente 2│
+   │ clara       │      │ vaga        │
+   └────┬────────┘      └──────┬──────┘
+        │                      │
+        └──────────┬───────────┘
+                   │
+        ┌──────────▼───────────┐
+        │ AGENTE 3: VALIDATOR  │
+        │ Busca gaps/problemas │
+        └──────────┬───────────┘
+                   │
+        ┌──────────▼──────────┐
+        │ AGENTE 4: GENERATOR │
+        │ Crea 3-5 soluciones │
+        └──────────┬──────────┘
+                   │
+        ┌──────────▼──────────┐
+        │ AGENTE 5: ADAPTIVE  │
+        │ Aprende del feedback│
+        │ (ESTO ES CRÍTICO)   │
+        └──────────┬──────────┘
+                   │
+        ┌──────────▼──────────┐
+        │ OUTPUT + MEMORIA    │
+        │ Guarda aprendizaje  │
+        └─────────────────────┘
+Flujo de datos
+Usuario → Router → Analyzer → Validator → Generator → Adaptive
+                                                          │
+                                                          ↓
+                                           Memoria de usuario (JSON)
+                                                          │
+                                                          ↑
+                                                 (Próxima iteración)
+
+🚪 AGENTE 1: ROUTER (Clasificador inteligente) {#agente1}
+ROL: Recibe lo que dices y determina dónde estás exactamente.
+ENTRADA: Texto libre (lo que describes)
+SALIDA: JSON con clasificación + próximo paso
+Pseudocódigo (PSeint style)
+pseudocFunción ROUTER(entrada_usuario)
+    
+    // Variables
+    tiene_idea ← FALSO
+    tiene_tema ← FALSO
+    tiene_tema ← FALSO
+    descripcion ← entrada_usuario
+    
+    // Paso 1: Analizar qué dice el usuario
+    Si descripcion contiene ("quiero", "voy a", "necesito", "idea") Entonces
+        tiene_idea ← VERDADERO
+    FinSi
+    
+    Si descripcion contiene ("ciberseguridad", "agentes", "Python", "GitHub") Entonces
+        tiene_tema ← VERDADERO
+    FinSi
+    
+    Si descripcion longitud > 100 Y tiene_idea Y tiene_tema Entonces
+        es_detallado ← VERDADERO
+    SiNo
+        es_detallado ← FALSO
+    FinSi
+    
+    // Paso 2: Clasificar en rama
+    Si tiene_idea Y tiene_tema Y es_detallado Entonces
+        rama ← "RAMA_A"
+        veredicto ← "Tienes idea clara"
+        siguiente_agente ← "ANALYZER"
+    SiNo
+        Si tiene_tema Y NO tiene_idea Entonces
+            rama ← "RAMA_B"
+            veredicto ← "Tienes tema pero sin idea clara"
+            siguiente_agente ← "EXPLORER"
+        SiNo
+            rama ← "RAMA_C"
+            veredicto ← "No tienes idea ni tema"
+            siguiente_agente ← "DISCOVERER"
+        FinSi
+    FinSi
+    
+    // Paso 3: Crear resultado
+    resultado ← {
+        "clasificacion": rama,
+        "veredicto": veredicto,
+        "confianza": 7,  // 0-10
+        "siguiente_agente": siguiente_agente,
+        "lo_que_falta": ["claridad_tema", "ejemplos_concretos"],
+        "timestamp": AHORA()
+    }
+    
+    Retornar resultado
+
+FinFunción
+Python implementación
+pythonimport json
+from datetime import datetime
+
+class RouterAgent:
+    """Agente 1: Clasificador inteligente de intención del usuario"""
+    
+    def __init__(self, memory_store=None):
+        """
+        Inicializa el agente Router
+        
+        Args:
+            memory_store: Almacén de memoria para recordar preferencias
+        """
+        self.memory = memory_store or {}
+        self.rama_keywords = {
+            "RAMA_A": ["idea clara", "quiero hacer", "tengo un plan"],
+            "RAMA_B": ["quiero aprender", "me interesa", "tema"],
+            "RAMA_C": ["no sé", "sin idea", "ayuda"]
+        }
+    
+    def analyze_intent(self, user_input: str) -> dict:
+        """
+        Analiza la intención del usuario
+        
+        Args:
+            user_input (str): Lo que el usuario describe
+            
+        Returns:
+            dict: Clasificación + próximo paso
+        """
+        
+        # Paso 1: Detectar presencia de idea, tema, detalle
+        tiene_idea = any(word in user_input.lower() 
+                        for word in ["quiero", "voy a", "necesito", "idea"])
+        
+        tiene_tema = any(word in user_input.lower() 
+                        for word in ["agentes", "python", "github", 
+                                    "ciberseguridad", "documentación"])
+        
+        es_detallado = len(user_input) > 100 and tiene_idea and tiene_tema
+        
+        # Paso 2: Clasificar en rama
+        if tiene_idea and tiene_tema and es_detallado:
+            rama = "RAMA_A"
+            veredicto = "Tienes idea clara"
+            siguiente = "ANALYZER"
+            confianza = 9
+            
+        elif tiene_tema and not tiene_idea:
+            rama = "RAMA_B"
+            veredicto = "Tienes tema pero sin idea clara"
+            siguiente = "EXPLORER"
+            confianza = 8
+            
+        else:
+            rama = "RAMA_C"
+            veredicto = "No tienes idea ni tema definidos"
+            siguiente = "DISCOVERER"
+            confianza = 7
+        
+        # Paso 3: Crear respuesta
+        resultado = {
+            "timestamp": datetime.now().isoformat(),
+            "clasificacion": rama,
+            "veredicto": veredicto,
+            "confianza": confianza,
+            "siguiente_agente": siguiente,
+            "diagnostico": {
+                "tiene_idea": tiene_idea,
+                "tiene_tema": tiene_tema,
+                "es_detallado": es_detallado
+            },
+            "tokens_usados": self._estimate_tokens(user_input)
+        }
+        
+        return resultado
+    
+    def _estimate_tokens(self, text: str) -> int:
+        """Estima tokens (aproximado)"""
+        # Regla simple: ~1.3 caracteres = 1 token
+        return max(10, len(text) // 4)
+    
+    def run(self, user_input: str) -> dict:
+        """Ejecuta el agente completo"""
+        print(f"[ROUTER] Analizando entrada del usuario...")
+        resultado = self.analyze_intent(user_input)
+        print(f"[ROUTER] Clasificación: {resultado['clasificacion']}")
+        print(f"[ROUTER] Siguiente agente: {resultado['siguiente_agente']}")
+        return resultado
+
+# Ejemplo de uso
+if __name__ == "__main__":
+    router = RouterAgent()
+    
+    entrada = """
+    Quiero crear un sistema de agentes inteligentes que maximize tokens en Claude.
+    Tengo experiencia con pseudocódigo pero soy principiante en Python.
+    Necesito entender GitHub desde cero.
+    """
+    
+    resultado = router.run(entrada)
+    print("\n" + "="*60)
+    print(json.dumps(resultado, indent=2, ensure_ascii=False))
+Salida esperada
+json{
+  "timestamp": "2026-04-25T14:30:00",
+  "clasificacion": "RAMA_A",
+  "veredicto": "Tienes idea clara",
+  "confianza": 9,
+  "siguiente_agente": "ANALYZER",
+  "diagnostico": {
+    "tiene_idea": true,
+    "tiene_tema": true,
+    "es_detallado": true
+  },
+  "tokens_usados": 87
+}
+
+🔍 AGENTE 2: ANALYZER (Descompositor de componentes) {#agente2}
+ROL: Toma tu idea y la descompone en piezas analizables.
+ENTRADA: Resultado del Router + Tu idea completa
+SALIDA: JSON con componentes + claridad de cada uno
+Pseudocódigo
+pseudocFunción ANALYZER(idea_usuario, rama_clasificacion)
+    
+    // Variables
+    componentes ← Lista vacía
+    clarity_scores ← Diccionario vacío
+    
+    // Paso 1: Identificar componentes según rama
+    Si rama_clasificacion == "RAMA_A" Entonces
+        componentes ← ["problema", "solución", "audiencia", 
+                      "diferenciador", "restricciones"]
+    SiNo
+        Si rama_clasificacion == "RAMA_B" Entonces
+            componentes ← ["tema_general", "ángulos_posibles", 
+                          "intereses_implícitos"]
+        FinSi
+    FinSi
+    
+    // Paso 2: Para cada componente, extraer claridad
+    Para cada componente en componentes Hacer
+        
+        Si componente está en idea_usuario Entonces
+            clarity ← 8
+        SiNo
+            Si hay_palabras_relacionadas(componente, idea_usuario) Entonces
+                clarity ← 5
+            SiNo
+                clarity ← 2  // Completamente ausente
+            FinSi
+        FinSi
+        
+        clarity_scores[componente] ← clarity
+        
+    FinPara
+    
+    // Paso 3: Calcular claridad general
+    promedio ← PROMEDIO(clarity_scores.valores())
+    
+    // Paso 4: Generar diagnóstico
+    puntos_fuertes ← [componentes con clarity > 6]
+    puntos_vagos ← [componentes con clarity < 5]
+    
+    resultado ← {
+        "componentes": clarity_scores,
+        "claridad_general": promedio,
+        "puntos_fuertes": puntos_fuertes,
+        "puntos_vagos": puntos_vagos,
+        "listo_para_validar": promedio > 6
+    }
+    
+    Retornar resultado
+
+FinFunción
+Python implementación
+pythonclass AnalyzerAgent:
+    """Agente 2: Descompositor de componentes"""
+    
+    def __init__(self, memory_store=None):
+        self.memory = memory_store or {}
+        self.component_keywords = {
+            "problema": ["problema", "issue", "falta", "necesita", "difícil"],
+            "solución": ["solución", "propongo", "crear", "hacer", "usando"],
+            "audiencia": ["para", "usuario", "quien", "gente", "persona"],
+            "diferenciador": ["único", "diferente", "innovador", "especial"],
+            "restricciones": ["limita", "no puedo", "sin", "tiene", "restringido"]
+        }
+    
+    def extract_components(self, idea: str, rama: str) -> dict:
+        """Extrae componentes de la idea"""
+        
+        if rama == "RAMA_A":
+            components_to_check = {
+                "problema": self.component_keywords["problema"],
+                "solución": self.component_keywords["solución"],
+                "audiencia": self.component_keywords["audiencia"],
+                "diferenciador": self.component_keywords["diferenciador"],
+                "restricciones": self.component_keywords["restricciones"]
+            }
+        else:
+            components_to_check = {
+                "tema_general": ["tema", "area", "área", "campo"],
+                "intereses": ["interesa", "gusta", "quiero", "me atrae"],
+                "experiencia": ["experiencia", "conozco", "sé", "trabajo"]
+            }
+        
+        clarity_scores = {}
+        
+        # Paso 2: Medir claridad de cada componente
+        idea_lower = idea.lower()
+        
+        for component, keywords in components_to_check.items():
+            found_keywords = sum(1 for kw in keywords if kw in idea_lower)
+            
+            if found_keywords >= 2:
+                clarity = 9
+            elif found_keywords == 1:
+                clarity = 6
+            elif any(kw in idea_lower for kw in keywords):
+                clarity = 4
+            else:
+                clarity = 1
+            
+            clarity_scores[component] = clarity
+        
+        # Paso 3: Calcular promedio
+        avg_clarity = sum(clarity_scores.values()) / len(clarity_scores)
+        
+        # Paso 4: Clasificar puntos fuertes y vagos
+        strong_points = [c for c, score in clarity_scores.items() if score >= 7]
+        weak_points = [c for c, score in clarity_scores.items() if score <= 4]
+        
+        resultado = {
+            "componentes": clarity_scores,
+            "claridad_general": round(avg_clarity, 1),
+            "puntos_fuertes": strong_points,
+            "puntos_vagos": weak_points,
+            "listo_para_validar": avg_clarity > 6,
+            "tokens_usados": self._estimate_tokens(idea)
+        }
+        
+        return resultado
+    
+    def _estimate_tokens(self, text: str) -> int:
+        return max(50, len(text) // 4)
+    
+    def run(self, idea: str, rama: str) -> dict:
+        print(f"[ANALYZER] Descomponiendo idea...")
+        resultado = self.extract_components(idea, rama)
+        print(f"[ANALYZER] Claridad general: {resultado['claridad_general']}/10")
+        return resultado
+
+# Ejemplo
+if __name__ == "__main__":
+    analyzer = AnalyzerAgent()
+    
+    idea = """
+    Quiero crear un sistema de agentes que:
+    1. Classifique dónde está el usuario (problema/tema/nada)
+    2. Analice los componentes de su idea
+    3. Valide si hay gaps
+    4. Genere soluciones
+    5. Aprenda de feedback
+    
+    El usuario es principiante en programación.
+    Lo quiero en GitHub de forma profesional.
+    Necesito maximizar tokens de Claude.
+    """
+    
+    resultado = analyzer.run(idea, "RAMA_A")
+    print("\n" + "="*60)
+    print(json.dumps(resultado, indent=2, ensure_ascii=False))
+
+✅ AGENTE 3: VALIDATOR (Verificador de gaps) {#agente3}
+ROL: Encuentra qué está mal, qué falta, qué podría fallar.
+ENTRADA: Componentes del Analyzer
+SALIDA: Lista priorizada de gaps + soluciones preliminares
+Pseudocódigo breve
+pseudocFunción VALIDATOR(componentes_clarity, idea_original)
+    
+    gaps ← Lista vacía
+    
+    // Paso 1: Identificar gaps por baja claridad
+    Para cada componente, claridad en componentes Hacer
+        Si claridad < 5 Entonces
+            gap_obj ← {
+                "componente": componente,
+                "severidad": "CRÍTICA" si claridad < 2 sino "ALTA",
+                "descripción": DESCRIBIR_PROBLEMA(componente),
+                "solución": GENERAR_SOLUCIÓN(componente)
+            }
+            gaps.Agregar(gap_obj)
+        FinSi
+    FinPara
+    
+    // Paso 2: Priorizar
+    gaps.OrdenarPor("severidad", descendente)
+    
+    Retornar {
+        "gaps_encontrados": gaps,
+        "total_gaps": gaps.Longitud(),
+        "total_críticos": CONTAR(severidad == "CRÍTICA"),
+        "viabilidad_actual": CALCULAR_VIABILIDAD(gaps)
+    }
+
+FinFunción
+Python completo
+pythonclass ValidatorAgent:
+    """Agente 3: Verificador de gaps y problemas"""
+    
+    def __init__(self, memory_store=None):
+        self.memory = memory_store or {}
+        self.gap_severity_map = {
+            0: "CRÍTICA",
+            1: "CRÍTICA",
+            2: "ALTA",
+            3: "ALTA",
+            4: "MEDIA",
+            5: "MEDIA",
+            6: "BAJA",
+            7: "BAJA"
+        }
+    
+    def identify_gaps(self, components_clarity: dict, idea: str) -> dict:
+        """Identifica gaps basado en claridad"""
+        
+        gaps = []
+        
+        # Paso 1: Crear gap por cada componente con baja claridad
+        for component, clarity in components_clarity.items():
+            if clarity < 6:  # Umbral de aceptabilidad
+                severity = self.gap_severity_map[clarity]
+                
+                gap = {
+                    "componente": component,
+                    "claridad_actual": clarity,
+                    "severidad": severity,
+                    "descripción": f"El componente '{component}' está poco definido ({clarity}/10)",
+                    "impacto": self._assess_impact(component, clarity),
+                    "solución_sugerida": self._suggest_fix(component)
+                }
+                gaps.append(gap)
+        
+        # Paso 2: Priorizar por severidad
+        severity_order = {"CRÍTICA": 0, "ALTA": 1, "MEDIA": 2, "BAJA": 3}
+        gaps.sort(key=lambda x: severity_order[x["severidad"]])
+        
+        # Paso 3: Contar estadísticas
+        total_gaps = len(gaps)
+        critical_gaps = sum(1 for g in gaps if g["severidad"] == "CRÍTICA")
+        viability_score = max(0, 10 - (critical_gaps * 3 + sum(1 for g in gaps if g["severidad"] == "ALTA")))
+        
+        resultado = {
+            "gaps_identificados": gaps,
+            "total_gaps": total_gaps,
+            "total_críticos": critical_gaps,
+            "viabilidad_actual": viability_score,
+            "está_lista_para_mejorar": len(gaps) <= 3 and critical_gaps == 0,
+            "tokens_usados": 200
+        }
+        
+        return resultado
+    
+    def _assess_impact(self, component: str, clarity: int) -> str:
+        """Evalúa el impacto del gap"""
+        if clarity < 2:
+            return "BLOQUEADOR - Sin este componente, nada funciona"
+        elif clarity < 4:
+            return "ALTO - Reduce viabilidad significativamente"
+        elif clarity < 6:
+            return "MEDIO - Afecta implementación"
+        else:
+            return "BAJO - Optimizable después"
+    
+    def _suggest_fix(self, component: str) -> str:
+        """Sugiere cómo arreglar el gap"""
+        fixes = {
+            "problema": "Define: ¿Cuál es el problema específico que resuelves?",
+            "solución": "Define: ¿Cómo exactamente lo resuelves?",
+            "audiencia": "Define: ¿A quién va dirigido?",
+            "diferenciador": "Define: ¿Qué lo hace único?",
+            "restricciones": "Lista: ¿Qué NO puedes hacer o tienes?",
+            "tema_general": "Aclara: ¿Cuál es el tema principal?",
+            "intereses": "Describe: ¿Qué te interesa específicamente?",
+            "experiencia": "Documenta: ¿Qué experiencia tienes?",
+            "tiempo": "Estima: ¿Cuánto tiempo tienes disponible?",
+            "recursos": "Lista: ¿Qué herramientas/librerías tienes?"
+        }
+        return fixes.get(component, f"Profundiza en el componente '{component}'")
+    
+    def run(self, components_clarity: dict, idea: str) -> dict:
+        print(f"[VALIDATOR] Validando componentes...")
+        resultado = self.identify_gaps(components_clarity, idea)
+        print(f"[VALIDATOR] Gaps encontrados: {resultado['total_gaps']}")
+        print(f"[VALIDATOR] Viabilidad: {resultado['viabilidad_actual']}/10")
+        return resultado
+
+# Ejemplo
+if __name__ == "__main__":
+    validator = ValidatorAgent()
+    
+    components = {
+        "problema": 8,
+        "solución": 7,
+        "audiencia": 4,
+        "diferenciador": 3,
+        "restricciones": 2
+    }
+    
+    resultado = validator.run(components, "idea de ejemplo")
+    print("\n" + "="*60)
+    print(json.dumps(resultado, indent=2, ensure_ascii=False))
+
+💡 AGENTE 4: GENERATOR (Creador de soluciones) {#agente4}
+ROL: Una vez validada la idea, genera 3-5 opciones de implementación.
+ENTRADA: Idea validada + Gaps priorizados
+SALIDA: 3-5 variantes de solución + evaluación
+Pseudocódigo
+pseudocFunción GENERATOR(idea_validada, gaps_priorizados, preferencias_usuario)
+    
+    soluciones ← Lista vacía
+    
+    // Paso 1: Generar 3-5 variantes basadas en estrategias diferentes
+    variantes ← [
+        "Estrategia_Mínima",      // Lo más simple posible
+        "Estrategia_Balanceada",  // Equilibrio perfecto
+        "Estrategia_Completa",    // Todo incluido
+        "Estrategia_Modular",     // Componentes desacoplados
+        "Estrategia_Adaptativa"   // Que aprenda con tiempo
+    ]
+    
+    Para cada estrategia en variantes Hacer
+        
+        solución ← {
+            "nombre": estrategia,
+            "descripción": DESCRIBIR_ESTRATEGIA(estrategia, idea_validada),
+            "ventajas": LISTAR_VENTAJAS(estrategia),
+            "desventajas": LISTAR_DESVENTAJAS(estrategia),
+            "tiempo_estimado": ESTIMAR_TIEMPO(estrategia),
+            "complejidad": CALCULAR_COMPLEJIDAD(estrategia),
+            "score_alineación": COMPARAR_CON_PREFERENCIAS(estrategia, preferencias_usuario)
+        }
+        
+        soluciones.Agregar(solución)
+    
+    FinPara
+    
+    // Paso 2: Rankear por alineación con usuario
+    soluciones.OrdenarPor("score_alineación", descendente)
+    
+    // Paso 3: Recomendar la mejor
+    mejor_solución ← soluciones[0]
+    
+    Retornar {
+        "soluciones_generadas": soluciones,
+        "mejor_opción": mejor_solución,
+        "razón_recomendación": "Alineada con tus preferencias de " + 
+                               preferencias_usuario.velocidad
+    }
+
+FinFunción
+Python implementación
+pythonclass GeneratorAgent:
+    """Agente 4: Generador de soluciones múltiples"""
+    
+    def __init__(self, memory_store=None):
+        self.memory = memory_store or {}
+        self.strategies = {
+            "minima": {
+                "nombre": "Estrategia Mínima",
+                "descripción": "Lo más simple para empezar",
+                "pasos": 3,
+                "complejidad": 2
+            },
+            "balanceada": {
+                "nombre": "Estrategia Balanceada",
+                "descripción": "Equilibrio entre simplicidad y funcionalidad",
+                "pasos": 5,
+                "complejidad": 5
+            },
+            "completa": {
+                "nombre": "Estrategia Completa",
+                "descripción": "Todas las funcionalidades",
+                "pasos": 7,
+                "complejidad": 8
+            },
+            "modular": {
+                "nombre": "Estrategia Modular",
+                "descripción": "Componentes desacoplados",
+                "pasos": 6,
+                "complejidad": 6
+            },
+            "adaptativa": {
+                "nombre": "Estrategia Adaptativa",
+                "descripción": "Sistema que aprende con tiempo",
+                "pasos": 8,
+                "complejidad": 9
+            }
+        }
+    
+    def generate_solutions(self, idea: str, gaps: list, user_prefs: dict = None) -> dict:
+        """Genera 3-5 soluciones diferentes"""
+        
+        user_prefs = user_prefs or {"velocidad": "rápido", "calidad": "buena"}
+        soluciones = []
+        
+        # Paso 1: Generar cada variante
+        for strategy_key, strategy_data in self.strategies.items():
+            
+            solution = {
+                "id": strategy_key,
+                "nombre": strategy_data["nombre"],
+                "descripción": strategy_data["descripción"],
+                "ventajas": self._get_advantages(strategy_key),
+                "desventajas": self._get_disadvantages(strategy_key),
+                "tiempo_estimado_horas": strategy_data["pasos"] * 2,
+                "complejidad": strategy_data["complejidad"],
+                "tokens_estimados": strategy_data["complejidad"] * 1000,
+                "gaps_que_resuelve": self._count_gaps_solved(strategy_key, gaps),
+                "score_alineación": self._alignment_score(strategy_key, user_prefs)
+            }
+            
+            soluciones.append(solution)
+        
+        # Paso 2: Rankear
+        soluciones.sort(key=lambda x: x["score_alineación"], reverse=True)
+        
+        # Paso 3: Crear respuesta
+        resultado = {
+            "soluciones_generadas": soluciones,
+            "mejor_opción": {
+                "id": soluciones[0]["id"],
+                "nombre": soluciones[0]["nombre"],
+                "razón": f"Mejor alineación ({soluciones[0]['score_alineación']}/10) con tus preferencias"
+            },
+            "tokens_totales_estimados": sum(s["tokens_estimados"] for s in soluciones),
+            "tokens_usados": 300
+        }
+        
+        return resultado
+    
+    def _get_advantages(self, strategy: str) -> list:
+        advantages = {
+            "minima": [
+                "Rápido de implementar (2-3 horas)",
+                "Fácil de entender",
+                "Bajo uso de tokens"
+            ],
+            "balanceada": [
+                "Buen equilibrio tiempo-funcionalidad",
+                "Extensible después",
+                "Costo moderado"
+            ],
+            "completa": [
+                "Todas las funcionalidades",
+                "Más profesional",
+                "Menos cambios después"
+            ],
+            "modular": [
+                "Componentes reutilizables",
+                "Fácil de mantener",
+                "Escalable"
+            ],
+            "adaptativa": [
+                "Aprende del usuario",
+                "Mejora con tiempo",
+                "Máxima eficiencia a largo plazo"
+            ]
+        }
+        return advantages.get(strategy, [])
+    
+    def _get_disadvantages(self, strategy: str) -> list:
+        disadvantages = {
+            "minima": [
+                "Funcionalidad limitada",
+                "Requiere mejoras después",
+                "Menos profesional"
+            ],
+            "balanceada": [
+                "Ni tan simple ni tan completa",
+                "Algunos detalles quedan sin resolver"
+            ],
+            "completa": [
+                "Toma más tiempo (12-14 horas)",
+                "Consume más tokens",
+                "Más difícil de mantener"
+            ],
+            "modular": [
+                "Setup inicial más complejo",
+                "Requiere buena documentación"
+            ],
+            "adaptativa": [
+                "Toma más tiempo implementar",
+                "Requiere sistema de persistencia",
+                "Curva de aprendizaje"
+            ]
+        }
+        return disadvantages.get(strategy, [])
+    
+    def _count_gaps_solved(self, strategy: str, gaps: list) -> int:
+        # Simplificado: estrategias complejas resuelven más gaps
+        strategy_gaps = {
+            "minima": 1,
+            "balanceada": 3,
+            "completa": len(gaps),
+            "modular": len(gaps),
+            "adaptativa": len(gaps)
+        }
+        return strategy_gaps.get(strategy, 0)
+    
+    def _alignment_score(self, strategy: str, prefs: dict) -> int:
+        # Puntuación 0-10 basada en preferencias
+        score_map = {
+            "minima": 6,
+            "balanceada": 8,
+            "completa": 7,
+            "modular": 8,
+            "adaptativa": 9
+        }
+        return score_map.get(strategy, 5)
+    
+    def run(self, idea: str, gaps: list, prefs: dict = None) -> dict:
+        print(f"[GENERATOR] Generando 5 soluciones diferentes...")
+        resultado = self.generate_solutions(idea, gaps, prefs)
+        print(f"[GENERATOR] Mejor opción: {resultado['mejor_opción']['nombre']}")
+        return resultado
+
+# Ejemplo
+if __name__ == "__main__":
+    generator = GeneratorAgent()
+    
+    resultado = generator.run(
+        idea="Sistema de 5 agentes",
+        gaps=["audiencia", "diferenciador"],
+        prefs={"velocidad": "rápido", "calidad": "alta"}
+    )
+    print("\n" + "="*60)
+    print(json.dumps(resultado, indent=2, ensure_ascii=False))
+
+🧠 AGENTE 5: ADAPTIVE (El que aprende) {#agente5}
+Este es el AGENTE MÁS IMPORTANTE para ti.
+ROL: Recuerda lo que aprendió de ti. Mejora automáticamente.
+ENTRADA: Feedback explícito + observación implícita
+SALIDA: Perfil de usuario actualizado + ajustes automáticos
+¿Cómo funciona realmente?
+Iteración 1:
+Tú: "Crea una documentación para GitHub"
+Agente 5: [Crea documentación estándar]
+Tú: "Muy técnica, necesito más simple"
+FEEDBACK → Agente 5 guarda: "Diego prefiere: SIMPLE, menos jerga, más ejemplos"
+Iteración 2:
+Tú: "Ahora documenta esto otro..."
+Agente 5: [Lee su memoria: "Diego = SIMPLE + ejemplos"]
+          [Crea automáticamente más simple]
+Tú: "¡Perfecto!"
+NUEVO FEEDBACK → Refuerza: "Sí, sigue así"
+Estructura de memoria
+json{
+  "usuario_id": "diego_2026_0048",
+  "preferencias": {
+    "complejidad": "baja",
+    "lenguaje": "simple + español + pseudocódigo_primero",
+    "ejemplos_código": true,
+    "velocidad_vs_calidad": "velocidad_70%_calidad_30%",
+    "herramientas": ["pseudocódigo", "python", "github"],
+    "aprendizaje_style": "progresivo_simple_a_técnico"
+  },
+  "historial_feedback": [
+    {
+      "fecha": "2026-04-25",
+      "tarea": "documentación_github",
+      "feedback": "muy_técnica",
+      "mejora_aplicada": "simplificar_jerga"
+    }
+  ],
+  "mejoras_efectivas": [
+    "uso_analogías_cotidianas",
+    "ejemplos_con_código_real",
+    "explicaciones_paso_a_paso"
+  ],
+  "patrones_detectados": [
+    "Diego aprende mejor con pseudocódigo primero",
+    "Necesita ver implementación real después",
+    "Prefiere velocidad sobre perfección en iteraciones"
+  ]
+}
+Pseudocódigo
+pseudocFunción ADAPTIVE(entrada_usuario, memoria_usuario, feedback_anterior)
+    
+    // Paso 1: Leer preferencias guardadas
+    prefs ← memoria_usuario.preferencias
+    
+    // Paso 2: Aplicar adaptaciones a esta solución
+    Si prefs.complejidad == "baja" Entonces
+        usar_pseudocódigo_primero ← VERDADERO
+        reducir_jerga_técnica ← VERDADERO
+        incluir_analogías ← VERDADERO
+    FinSi
+    
+    // Paso 3: Generar solución ADAPTADA
+    solución_adaptada ← GENERAR_SOLUCIÓN(entrada_usuario, prefs)
+    
+    // Paso 4: Registrar feedback del usuario
+    Si usuario_da_feedback Entonces
+        nuevo_feedback ← PROCESAR_FEEDBACK(feedback_usuario)
+        mejoras_aplicadas ← EXTRAER_LECCIONES(nuevo_feedback)
+        
+        memoria_usuario.historial_feedback.Agregar(nuevo_feedback)
+        memoria_usuario.mejoras_efectivas.Agregar(mejoras_aplicadas)
+    FinSi
+    
+    Retornar {
+        "solución": solución_adaptada,
+        "memoria_actualizada": memoria_usuario
+    }
+
+FinFunción
+Python implementación (CRÍTICA)
+pythonimport json
+from datetime import datetime
+import os
+
+class AdaptiveAgent:
+    """Agente 5: Sistema adaptativo que aprende del usuario"""
+    
+    def __init__(self, memory_store_path: str = "./user_memory/"):
+        """
+        Inicializa el agente adaptativo
+        
+        Args:
+            memory_store_path: Ruta donde guardar memorias de usuarios
+        """
+        self.memory_store_path = memory_store_path
+        os.makedirs(memory_store_path, exist_ok=True)
+    
+    def load_user_memory(self, user_id: str) -> dict:
+        """Carga la memoria de un usuario"""
+        memory_file = os.path.join(self.memory_store_path, f"{user_id}_memory.json")
+        
+        if os.path.exists(memory_file):
+            with open(memory_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        else:
+            # Primera vez: crear memoria base
+            return self._create_default_memory(user_id)
+    
+    def _create_default_memory(self, user_id: str) -> dict:
+        """Crea la memoria inicial de un usuario"""
+        return {
+            "usuario_id": user_id,
+            "fecha_creación": datetime.now().isoformat(),
+            "preferencias": {
+                "complejidad": "desconocida",  # Se aprende
+                "lenguaje": "español",
+                "ejemplos_código": True,
+                "velocidad_vs_calidad": None,
+                "herramientas": [],
+                "estilo_aprendizaje": None
+            },
+            "historial_feedback": [],
+            "mejoras_efectivas": [],
+            "patrones_detectados": [],
+            "mejoras_por_aplicar": []
+        }
+    
+    def save_user_memory(self, user_id: str, memory: dict):
+        """Guarda la memoria de un usuario"""
+        memory_file = os.path.join(self.memory_store_path, f"{user_id}_memory.json")
+        with open(memory_file, 'w', encoding='utf-8') as f:
+            json.dump(memory, f, indent=2, ensure_ascii=False)
+    
+    def process_feedback(self, feedback: str, task_type: str, memory: dict) -> dict:
+        """
+        Procesa feedback y actualiza memoria
+        
+        Args:
+            feedback: Lo que el usuario dice
+            task_type: Tipo de tarea (documentación, código, etc.)
+            memory: Memoria actual del usuario
+            
+        Returns:
+            Memoria actualizada + lecciones aprendidas
+        """
+        
+        # Paso 1: Clasificar el feedback
+        feedback_lower = feedback.lower()
+        
+        feedback_entry = {
+            "timestamp": datetime.now().isoformat(),
+            "tarea": task_type,
+            "feedback_original": feedback,
+            "tipo": self._classify_feedback(feedback_lower),
+            "sentimiento": self._analyze_sentiment(feedback_lower),
+            "sugerencias": self._extract_suggestions(feedback)
+        }
+        
+        # Paso 2: Extraer lecciones
+        lecciones = self._extract_lessons(feedback_lower)
+        
+        # Paso 3: Actualizar memoria
+        memory["historial_feedback"].append(feedback_entry)
+        memory["mejoras_efectivas"].extend(lecciones)
+        memory["mejoras_efectivas"] = list(set(memory["mejoras_efectivas"]))  # Remover duplicados
+        
+        # Paso 4: Actualizar preferencias (aprendizaje continuo)
+        self._update_preferences(memory, lecciones, feedback_lower)
+        
+        return {
+            "memory_actualizada": memory,
+            "lecciones_aprendidas": lecciones,
+            "feedback_procesado": feedback_entry
+        }
+    
+    def _classify_feedback(self, feedback: str) -> str:
+        """Clasifica el tipo de feedback"""
+        if any(word in feedback for word in ["demasiado", "muy", "excesivo"]):
+            return "EXCESO"
+        elif any(word in feedback for word in ["falta", "no tiene", "necesita"]):
+            return "CARENCIA"
+        elif any(word in feedback for word in ["perfecto", "excelente", "bien"]):
+            return "POSITIVO"
+        elif any(word in feedback for word in ["difícil", "complicado", "confuso"]):
+            return "DIFICULTAD"
+        else:
+            return "NEUTRO"
+    
+    def _analyze_sentiment(self, feedback: str) -> str:
+        """Analiza el sentimiento del feedback"""
+        positive_words = ["perfecto", "excelente", "bien", "gracias", "me gusta", "amo"]
+        negative_words = ["mal", "no", "problema", "falta", "difícil", "confuso"]
+        
+        pos_count = sum(1 for word in positive_words if word in feedback)
+        neg_count = sum(1 for word in negative_words if word in feedback)
+        
+        if pos_count > neg_count:
+            return "POSITIVO"
+        elif neg_count > pos_count:
+            return "NEGATIVO"
+        else:
+            return "NEUTRO"
+    
+    def _extract_suggestions(self, feedback: str) -> list:
+        """Extrae sugerencias concretas del feedback"""
+        sugerencias = []
+        
+        if "más" in feedback.lower():
+            sugerencias.append("agregar_más_contenido")
+        if "menos" in feedback.lower():
+            sugerencias.append("reducir_complejidad")
+        if "ejemplo" in feedback.lower():
+            sugerencias.append("incluir_ejemplos")
+        if "simple" in feedback.lower():
+            sugerencias.append("simplificar")
+        
+        return sugerencias
+    
+    def _extract_lessons(self, feedback: str) -> list:
+        """Extrae lecciones del feedback"""
+        lessons = []
+        
+        if "muy técnico" in feedback or "técnica" in feedback:
+            lessons.append("reducir_jerga_técnica")
+            lessons.append("usar_analogías_simples")
+        
+        if "sin ejemplo" in feedback or "ejemplo" in feedback:
+            lessons.append("siempre_incluir_código_ejemplo")
+        
+        if "claro" in feedback or "entiendo" in feedback:
+            lessons.append("mantener_este_nivel_claridad")
+        
+        if "rápido" in feedback or "velocidad" in feedback:
+            lessons.append("priorizar_rapidez")
+        
+        return lessons
+    
+    def _update_preferences(self, memory: dict, lecciones: list, feedback: str):
+        """Actualiza las preferencias del usuario basado en lecciones"""
+        
+        if "reducir_jerga_técnica" in lecciones:
+            memory["preferencias"]["complejidad"] = "baja"
+        
+        if "priorizar_rapidez" in lecciones:
+            memory["preferencias"]["velocidad_vs_calidad"] = "velocidad_70%_calidad_30%"
+        
+        if "siempre_incluir_código_ejemplo" in lecciones:
+            memory["preferencias"]["ejemplos_código"] = True
+    
+    def adapt_solution(self, solution: dict, memory: dict) -> dict:
+        """
+        Adapta una solución basada en la memoria del usuario
+        
+        Args:
+            solution: Solución generada
+            memory: Memoria del usuario
+            
+        Returns:
+            Solución adaptada
+        """
+        
+        adaptaciones = []
+        
+        # Adaptación 1: Complejidad
+        if memory["preferencias"]["complejidad"] == "baja":
+            solution["explicación_nivel"] = "SIMPLE_PRIMERO"
+            solution["jerga_reducida"] = True
+            adaptaciones.append("complejidad_reducida_a_baja")
+        
+        # Adaptación 2: Ejemplos
+        if memory["preferencias"]["ejemplos_código"]:
+            solution["include_code_examples"] = True
+            adaptaciones.append("ejemplos_incluidos")
+        
+        # Adaptación 3: Velocidad
+        if memory["preferencias"]["velocidad_vs_calidad"] == "velocidad_70%_calidad_30%":
+            solution["optimizar_para"] = "rapidez"
+            adaptaciones.append("optimizado_para_rapidez")
+        
+        solution["adaptaciones_aplicadas"] = adaptaciones
+        
+        return solution
+    
+    def run(self, user_id: str, entrada: str, task_type: str, feedback: str = None) -> dict:
+        """Ejecuta el ciclo completo de adaptación"""
+        
+        print(f"[ADAPTIVE] Cargando memoria de {user_id}...")
+        memory = self.load_user_memory(user_id)
+        
+        # Si hay feedback, procesar
+        if feedback:
+            print(f"[ADAPTIVE] Procesando feedback: '{feedback}'")
+            feedback_result = self.process_feedback(feedback, task_type, memory)
+            memory = feedback_result["memory_actualizada"]
+            self.save_user_memory(user_id, memory)
+            print(f"[ADAPTIVE] Lecciones aprendidas: {feedback_result['lecciones_aprendidas']}")
+        
+        # Generar solución adaptada
+        print(f"[ADAPTIVE] Generando solución adaptada...")
+        base_solution = {"entrada": entrada, "tipo": task_type}
+        adapted_solution = self.adapt_solution(base_solution, memory)
+        
+        resultado = {
+            "solución_adaptada": adapted_solution,
+            "memoria_usuario": memory,
+            "adaptaciones_aplicadas": adapted_solution.get("adaptaciones_aplicadas", []),
+            "tokens_usados": 250
+        }
+        
+        return resultado
+
+# Ejemplo completo
+if __name__ == "__main__":
+    adaptive = AdaptiveAgent()
+    
+    # Primera iteración
+    print("=== ITERACIÓN 1 ===")
+    result1 = adaptive.run(
+        user_id="diego_2026_0048",
+        entrada="Documenta este código para GitHub",
+        task_type="documentación"
+    )
+    print(json.dumps(result1, indent=2, ensure_ascii=False))
+    
+    # Segunda iteración con feedback
+    print("\n=== ITERACIÓN 2 (Con feedback) ===")
+    result2 = adaptive.run(
+        user_id="diego_2026_0048",
+        entrada="Ahora genera otro agente",
+        task_type="código",
+        feedback="La documentación anterior fue muy técnica. Necesitaba más simple, con pseudocódigo primero."
+    )
+    print(json.dumps(result2, indent=2, ensure_ascii=False))
+    
+    # Tercera iteración (debería estar adaptada)
+    print("\n=== ITERACIÓN 3 (Sistema ya aprendió) ===")
+    result3 = adaptive.run(
+        user_id="diego_2026_0048",
+        entrada="Crea un validador de ideas",
+        task_type="código"
+    )
+    print(f"\nAdaptaciones aplicadas: {result3['adaptaciones_aplicadas']}")
+
+💾 SISTEMA DE MEMORIA (Persistencia) {#memoria}
+Tu memoria se guarda en JSON así:
+json{
+  "usuario_id": "diego_2026_0048",
+  "fecha_creación": "2026-04-25T14:00:00",
+  "preferencias": {
+    "complejidad": "baja",
+    "lenguaje": "español + pseudocódigo",
+    "ejemplos_código": true,
+    "velocidad_vs_calidad": "velocidad_70%",
+    "herramientas": ["pseudocódigo", "python", "github"],
+    "estilo_aprendizaje": "progresivo_simple_a_técnico"
+  },
+  "historial_feedback": [
+    {
+      "fecha": "2026-04-25",
+      "tarea": "documentación",
+      "feedback": "muy técnica",
+      "mejoras_aplicadas": ["reducir_jerga", "más_ejemplos"]
+    }
+  ],
+  "mejoras_efectivas": [
+    "usar_analogías_cotidianas",
+    "pseudocódigo_primero",
+    "ejemplos_código_reales",
+    "explicaciones_paso_a_paso"
+  ],
+  "patrones_detectados": [
+    "Diego aprende mejor visual",
+    "Necesita ver pseudocódigo antes que Python",
+    "Prefiere rapidez sobre perfección"
+  ]
+}
+¿Dónde se guarda?
+diego-agentes-ia/
+├── packages/
+│   └── agent-adaptive/
+│       ├── memory/
+│       │   └── diego_2026_0048_memory.json  ← AQUÍ
+│       └── agent_adaptive.py
+
+🐙 INTEGRACIÓN EN GITHUB {#github}
+Paso 1: Crear un repositorio en GitHub
+¿Qué es GitHub? Un lugar en internet donde subes tu código. Es como Google Drive pero para programadores.
+Pasos:
+
+Ve a https://github.com (crea cuenta si no tienes)
+Click en "New" (arriba a la izquierda)
+Nombre del repo: diego-agentes-ia
+Descripción: "Sistema de 5 agentes multiagente para optimización de prompts"
+Click "Create repository"
+
+Paso 2: Bajar Git a tu computadora
+bash# Windows
+# Descarga desde: https://git-scm.com/download/win
+
+# macOS
+brew install git
+
+# Linux
+sudo apt install git
+Paso 3: Clonear el repo
+bash# En tu computadora, en la carpeta donde quieras trabajar
+git clone https://github.com/TU_USUARIO/diego-agentes-ia.git
+cd diego-agentes-ia
+Paso 4: Crear la estructura
+bash# Crear carpetas
+mkdir -p packages/{agent-router,agent-analyzer,agent-validator,agent-generator,agent-adaptive}/src
+mkdir -p packages/{agent-router,agent-analyzer,agent-validator,agent-generator,agent-adaptive}/examples
+mkdir -p shared
+mkdir -p docs
+
+# Crear archivos base
+touch README.md
+touch SYSTEM.md
+touch packages/agent-router/README.md
+touch packages/agent-router/src/router.py
+touch packages/agent-router/examples/example_router.py
+Paso 5: Guardar los cambios
+bash# Ver qué cambió
+git status
+
+# Agregar todos los cambios
+git add .
+
+# Guardar con mensaje
+git commit -m "Inicializar estructura de 5 agentes"
+
+# Subir a GitHub
+git push origin main
+¿Qué hizo cada comando?
+
+git status: Muestra qué cambió
+git add .: "Quiero guardar todo esto"
+git commit -m "mensaje": Guardar con descripción
+git push origin main: Subir a GitHub
+
+Paso 6: Ver en GitHub
+Ve a tu repo en GitHub. Verás toda tu estructura.
+
+📊 CONTADOR DE TOKENS {#tokens}
+Explicación simple:
+Cada vez que usas Claude, gastas tokens. Es como gasolina para IA.
+¿Cuánto gasto?
+
+Una palabra ≈ 1.3 tokens
+Un párrafo ≈ 50-100 tokens
+Una imagen ≈ 500 tokens
+Todo un documento ≈ 2,000-5,000 tokens
+
+Plan Free:
+
+200,000 tokens/mes (aproximado)
+≈ 6,666 tokens/día
+≈ 50 mensajes/día (si cada uno gasta ~130 tokens)
+
+Haiku vs Sonnet:
+MétricaHaikuSonnetVelocidad⚡ RápidoLentoCosto💰 BaratoCaroCalidadBuenaExcelenteTokens/segundo~3,000~1,000
+Recomendación para TI:
+
+Desarrollo: Usa Haiku (rápido, barato)
+Outputs finales: Cambia a Sonnet (mejor calidad)
+
+Cálculo esta semana:
+
+5 agentes × 3 iteraciones = 15 conversaciones
+~3,000-4,000 tokens/conversación
+Total: 45,000-60,000 tokens
+Plan Free: 200,000 tokens
+Estás OK: Tendrás ~140,000 tokens sobrantes
+
+
+🚀 PRÓXIMOS PASOS
+
+Hoy: Entender esta arquitectura (que ya hicimos)
+Mañana: Implementar Agente 1 (Router) en tu computadora
+Pasado: Agentes 2-4 (Analyzer, Validator, Generator)
+Viernes: Agente 5 (Adaptive) + Sistema de memoria
+Sábado: Subirlo todo a GitHub + Documentación
+
+
+Diego Mercedes Llauger (2026-0048)
+Ingeniería en Ciberseguridad | Universidad Dominicano Americana
+Versión 1.0 | Abril 2026
