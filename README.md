@@ -5541,5 +5541,246 @@ Si todos están ✓, ¡estás listo para el portfolio!
 Diego Mercedes Llauger (2026-0048)
 
 
-════════════════════════════════════════════════════════════════════════════
+🔓 SISTEMA MULTIAGENTE PARA ANÁLISIS Y EVALUACIÓN DE SEGURIDAD EN DIRECCIONES IP
+Diego Mercedes Llauger (2026-0048)
+Ingeniería en Ciberseguridad | Universidad Dominicico Americano
+
+⚠️ NOTA CRÍTICA INICIAL
+Antes de comenzar, debo ser claro sobre algo importante:
+Este proyecto está en un área sensible. Las técnicas de análisis de direcciones IP pueden ser legales o ilegales según el CONTEXTO:
+✅ LEGAL (Educativo/Autorizado):
+
+Analizar IPs de sistemas propios
+Laboratorios académicos controlados (clase)
+Máquinas virtuales de práctica (HackTheBox, TryHackMe)
+Con autorización explícita del dueño
+
+❌ ILEGAL (Acceso no autorizado):
+
+Analizar sistemas de otros sin permiso
+Acceso a redes sin autorización
+Violación de privacidad
+
+Mi recomendación: Usa este sistema SOLO en laboratorios académicos autorizados. ¿Estamos en la misma página?
+
+🤖 ARQUITECTURA DE AGENTES PROPUESTA
+┌─────────────────────────────────────────────┐
+│  INPUT: Usuario da dirección IP             │
+│  (ej: 192.168.1.1 o 10.0.0.100)            │
+└────────────────┬────────────────────────────┘
+                 │
+         ┌───────▼──────────┐
+         │  AGENTE 1:       │
+         │  VALIDADOR       │
+         │  ¿IP válida?     │
+         └───────┬──────────┘
+                 │
+         ┌───────▼──────────┐
+         │  AGENTE 2:       │
+         │  SCANNER         │
+         │  ¿Puertos?       │
+         └───────┬──────────┘
+                 │
+         ┌───────▼──────────┐
+         │  AGENTE 3:       │
+         │  ENUMERATOR      │
+         │  ¿Servicios?     │
+         └───────┬──────────┘
+                 │
+         ┌───────▼──────────┐
+         │  AGENTE 4:       │
+         │  VULN CHECKER    │
+         │  ¿Vulnerables?   │
+         └───────┬──────────┘
+                 │
+         ┌───────▼──────────┐
+         │  AGENTE 5:       │
+         │  EDUCATOR        │
+         │  ¿Qué significa? │
+         └───────┬──────────┘
+                 │
+         ┌───────▼──────────┐
+         │  OUTPUT:         │
+         │  Reporte + Info  │
+         └──────────────────┘
+
+
+🤖 AGENTE 2: SCANNER DE PUERTOS
+Conceptos previos: ¿Qué es un puerto y por qué importa?
+Analogía real
+Imagina un banco:
+
+El banco = Una computadora
+Ventanillas = Puertos
+Servicios en cada ventanilla = Lo que escuchas
+
+Ventanilla 1 (Puerto 80) → "¿Quieres hablar con Atención al Cliente?"
+Ventanilla 2 (Puerto 443) → "¿Quieres hablar de forma SEGURA?"
+Ventanilla 3 (Puerto 22) → "¿Quieres acceso de administrador?"
+Ventanilla 4 (Puerto 3306) → "¿Quieres hablar con la base de datos?"
+
+Si una ventanilla está CERRADA (puerto cerrado):
+- No responde
+- No puedes hacer nada
+
+Si una ventanilla está ABIERTA (puerto abierto):
+- Responde
+- Oportunidad de interacción
+
+🤖 AGENTE 3: ENUMERADOR DE VERSIONES Y SERVICIOS
+Concepto: ¿Por qué enumerar versiones?
+ANTES (Saber que hay SSH abierto):
+
+✓ Puerto 22 está abierto
+✓ Hay SSH corriendo
+
+Pero... ¿Qué versión?
+¿Tiene vulnerabilidades conocidas?
+
+DESPUÉS (Saber la versión exacta):
+✓ Puerto 22 está abierto
+✓ OpenSSH 7.4 corriendo
+⚠️  OpenSSH 7.4 tiene CVE-2018-15473
+🔓 Vulnerability: User enumeration
+
+→ Ahora SABES qué atacar
+
+🤖 AGENTE 4: VULNERABILITY CHECKER (VERIFICADOR DE VULNERABILIDADES)
+Concepto: ¿Por qué y cómo buscar exploits?
+Analogía
+
+ANTES (Agente 3 dice):
+"OpenSSH 7.4 tiene CVE-2018-15473"
+
+PROBLEMA: ¿Ahora qué?
+¿Cómo se explota?
+¿Hay herramienta pública?
+¿Cómo lo hago?
+
+DESPUÉS (Agente 4 dice):
+"Aquí está el exploit exacto"
+"Así es como lo ejecutas"
+"Estos son los pasos"
+→ PUEDES ATACAR
+
+🤖 AGENTE 5: BRUTE FORCE / ACCESS AGENT
+Concepto: Intentar acceso cuando conoces la puerta
+Analogía
+ESCENARIO:
+Conoces que hay SSH en puerto 22
+Sabes que es OpenSSH 7.4
+Buscaste exploits pero no funcionaron
+
+AHORA:
+Intentas acceso por fuerza bruta
+Usuario + Contraseña = Acceso
+
+AGENTE 5 HACE:
+1. Intenta usuario admin + contraseña "admin"
+2. Espera 5 minutos
+3. Intenta usuario root + contraseña "root"
+... (hasta 10 intentos máximo)
+4. Si alguno funciona: ¡Acceso logrado!
+
+🤖 AGENTE 6: REPORT GENERATOR (Generador de Reportes Profesionales)
+
+Concepto: ¿Por qué un Agente 6?
+Analogía: Detective que cierra su caso
+
+FASES:
+1. Agentes 1-5 → "Investigación completa"
+   (Validar IP, escanear, enumerar, buscar exploits, acceso)
+
+2. Agente 6 → "Escribir el reporte final"
+   (Compilar datos, crear documento profesional, recomendaciones)
+
+DIFERENCIA:
+❌ Sin Agente 6: Tienes datos en pantalla (no profesional)
+✓ Con Agente 6: Tienes reporte en PDF/HTML (listo para presentar)
+
+# 🔐 Sistema Multiagente de Reconocimiento de IPs
+**Diego Mercedes Llauger (2026-0048)**
+*Ingeniería en Ciberseguridad | Universidad Dominicano Americana*
+
+## Descripción
+Sistema educativo de 5 agentes para reconocimiento y análisis de seguridad en direcciones IP.
+
+### Agentes incluidos:
+1. **Agente 1**: Validador de IPs
+2. **Agente 2**: Scanner de Puertos
+3. **Agente 3**: Enumerador de Servicios
+4. **Agente 4**: Verificador de Vulnerabilidades
+5. **Agente 5**: Brute Force SSH (con límites de seguridad)
+
+## ⚠️ ADVERTENCIA LEGAL
+Este código está diseñado **ÚNICAMENTE para propósitos educativos** y **LABORATORIO AUTORIZADO**.
+
+### Uso LEGAL:
+✓ Máquinas virtuales propias
+✓ Laboratorios académicos autorizados (HackTheBox, TryHackMe)
+✓ Con consentimiento explícito del propietario
+
+### Uso ILEGAL:
+✗ Máquinas de otros sin permiso
+✗ Redes corporativas sin autorización
+✗ Violación de privacidad
+
+## Instalación
+
+```bash
+# 1. Clonar repositorio
+git clone https://github.com/tuusuario/diego-agentes-ia.git
+cd diego-agentes-ia
+
+# 2. Instalar dependencias
+pip install -r requirements.txt
+
+# 3. Ejecutar agentes individuales
+python agentes/agente_1_validador_ip/validador_ip.py
+python agentes/agente_2_scanner_puertos/scanner_puertos.py
+# ... etc
+
+# 4. O ejecutar todos juntos
+python scripts/all_agents.py
+```
+
+## Estructura de archivos
+[Ver carpetas arriba]
+
+## Ejemplos de uso
+
+### Ejemplo 1: Validar IP
+```python
+from agentes.agente_1_validador_ip.validador_ip import IPValidator
+
+validator = IPValidator()
+resultado = validator.validar("192.168.1.1")
+print(resultado)
+```
+
+### Ejemplo 2: Escanear puertos
+```python
+from agentes.agente_2_scanner_puertos.scanner_puertos import PortScanner
+
+scanner = PortScanner(timeout=3)
+resultados = scanner.escanear_rango("192.168.1.1", [22, 80, 443])
+scanner.mostrar_resultados(resultados)
+```
+
+## Flujo de trabajo recomendado
+
+ESTE CÓDIGO ESTÁ DISEÑADO PARA PROPÓSITOS EDUCATIVOS ÚNICAMENTE
+
+Uso legal:
+✓ Máquinas virtuales propias
+✓ Laboratorios académicos autorizados
+✓ Con consentimiento explícito
+
+Uso ilegal:
+✗ Máquinas ajenas sin permiso = DELITO
+✗ Redes corporativas sin autorización = DELITO
+✗ Violación de privacidad = DELITO
+
+RESPONSABILIDAD: El usuario es responsable de cumplir con leyes locales.
+
 """
